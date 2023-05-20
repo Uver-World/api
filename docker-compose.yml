@@ -1,0 +1,25 @@
+version: '3.1'
+services:
+  mongo:
+    image: mongo
+    restart: always
+    command: [ --auth, "--bind_ip_all" ]
+    ports:
+      - "27017:27017"
+    env_file:
+      - .env
+    environment:
+      - bindIp=0.0.0.0
+    volumes:
+      - './data:/data/db'
+
+  server:
+    build: server/
+    ports:
+      - "8080:8080"
+    environment:
+      - ROCKET_ADDRESS=0.0.0.0
+    env_file:
+      - .env
+    depends_on:
+      - mongo

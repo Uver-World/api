@@ -1,0 +1,40 @@
+mod organization;
+mod user;
+
+use rocket::Route;
+use rocket_okapi::okapi::openapi3::OpenApi;
+use rocket_okapi::openapi_get_routes_spec;
+
+use crate::cors;
+
+pub enum ApiRoute {
+    Root,
+    User,
+    Organization,
+}
+
+impl ApiRoute {
+    pub fn retrieve_routes(&self) -> (Vec<Route>, OpenApi) {
+        match self {
+            Self::Root => openapi_get_routes_spec![cors::cors_options],
+            Self::User => openapi_get_routes_spec![
+                user::renew,
+                user::register,
+                user::email_exists,
+                user::from_id,
+                user::from_token,
+                user::id_update_auth,
+                user::token_update_auth,
+                user::update,
+                user::delete_from_id,
+                user::delete_from_token,
+            ],
+            Self::Organization => openapi_get_routes_spec![
+                organization::from_id,
+                organization::delete_from_id,
+                organization::create,
+                organization::update,
+            ],
+        }
+    }
+}
