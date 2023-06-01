@@ -5,11 +5,12 @@ pub mod cors;
 pub mod model;
 pub mod route;
 pub mod settings;
+pub mod testing;
 
-pub use api::*;
+pub use crate::{api::*, server::*};
+
 use reqwest::{Error, Response};
 use rocket::serde::DeserializeOwned;
-pub use server::*;
 
 pub async fn parse_request<T: DeserializeOwned>(
     res: Result<Response, Error>,

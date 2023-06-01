@@ -23,7 +23,7 @@ impl UserUpdate {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema)]
+#[derive(Deserialize, Serialize, Debug, JsonSchema, Clone)]
 pub struct User {
     pub authentication: Authentication,
     pub unique_id: String,

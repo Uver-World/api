@@ -1,7 +1,9 @@
 use database::group::Group;
 use database::Database;
 
+use rocket::http::Status;
 use rocket::request::{self, FromRequest, Outcome, Request};
+use rocket::response::status::Custom;
 use rocket_okapi::okapi::openapi3::{
     Object, SecurityRequirement, SecurityScheme, SecuritySchemeData,
 };
@@ -15,6 +17,21 @@ use serde::Deserialize;
 pub struct UserData {
     pub id: Option<String>,
     pub group: Group,
+}
+
+impl UserData {
+    pub fn matches_group(&self, groups: Vec<Group>) -> Result<(), Custom<String>> {
+        if matches!(self.group, Group::Guest) {
+            return Err(Custom(Status::Forbidden, "Authentication required.".into()));
+        }
+        if groups.contains(&self.group) == false {
+            return Err(Custom(
+                Status::Unauthorized,
+                format!("You need to be part of one of the following groups: [{groups:?}]."),
+            ));
+        }
+        Ok(())
+    }
 }
 
 impl UserData {

@@ -1,9 +1,7 @@
-use std::{time::SystemTime};
+use std::time::SystemTime;
 
 use rand::Rng;
 use serde::Serialize;
-
-
 
 #[derive(Serialize)]
 pub struct Host {

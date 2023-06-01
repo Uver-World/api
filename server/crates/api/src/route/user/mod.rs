@@ -21,11 +21,8 @@ pub async fn from_token(
     database: &State<Database>,
     token: String,
 ) -> Custom<Result<Json<User>, String>> {
-    if matches!(user_data.group, Group::Website | Group::Server) == false {
-        return Custom(
-            Status::Forbidden,
-            Err("Website or Server group required.".into()),
-        );
+    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
+        return Custom(response.0, Err(response.1));
     }
     match database.user_manager.from_token(&token).await {
         Ok(user) if user.is_some() => Custom(Status::Ok, Ok(Json(user.unwrap()))),
@@ -44,11 +41,8 @@ pub async fn from_id(
     database: &State<Database>,
     id: u64,
 ) -> Custom<Result<Json<User>, String>> {
-    if matches!(user_data.group, Group::Website | Group::Server) == false {
-        return Custom(
-            Status::Forbidden,
-            Err("Website or Server group required.".into()),
-        );
+    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
+        return Custom(response.0, Err(response.1));
     }
     match database.user_manager.from_id(&id.to_string()).await {
         Ok(user) if user.is_some() => Custom(Status::Ok, Ok(Json(user.unwrap()))),
@@ -68,8 +62,8 @@ pub async fn update(
     token: String,
     user_update: Json<Vec<UserUpdate>>,
 ) -> Custom<Result<Json<bool>, String>> {
-    if matches!(user_data.group, Group::Website) == false {
-        return Custom(Status::Forbidden, Err("Website group required.".into()));
+    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
+        return Custom(response.0, Err(response.1));
     }
     match database.user_manager.from_token(&token).await {
         Ok(user) if user.is_some() => {
@@ -95,8 +89,8 @@ pub async fn delete_from_token(
     database: &State<Database>,
     token: String,
 ) -> Custom<Result<Json<bool>, String>> {
-    if matches!(user_data.group, Group::Website) == false {
-        return Custom(Status::Forbidden, Err("Website group required.".into()));
+    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
+        return Custom(response.0, Err(response.1));
     }
     match database.user_manager.delete_user(None, Some(&token)).await {
         Ok(_) => Custom(Status::Ok, Ok(Json(true))),
@@ -112,8 +106,8 @@ pub async fn delete_from_id(
     database: &State<Database>,
     id: String,
 ) -> Custom<Result<Json<bool>, String>> {
-    if matches!(user_data.group, Group::Website) == false {
-        return Custom(Status::Forbidden, Err("Website group required.".into()));
+    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
+        return Custom(response.0, Err(response.1));
     }
     match database.user_manager.delete_user(Some(&id), None).await {
         Ok(_) => Custom(Status::Ok, Ok(Json(true))),
@@ -140,8 +134,8 @@ pub async fn renew(
             helper::renew_token(user, ip, auth, &database.user_manager).await
         }
         Login::UserId(user_id) => {
-            if matches!(user_data.group, Group::Website) == false {
-                return Custom(Status::Forbidden, "Website group required.".into());
+            if let Err(response) = user_data.matches_group(vec![Group::Website]) {
+                return Custom(response.0, response.1);
             }
             let user = database.user_manager.from_id(&user_id).await;
             helper::renew_token(
@@ -170,8 +164,8 @@ pub async fn register(
     login: Option<Json<Login>>,
     remot_addr: SocketAddr,
 ) -> Custom<String> {
-    if matches!(user_data.group, Group::Website) == false {
-        return Custom(Status::Forbidden, "Website group required.".into());
+    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
+        return Custom(response.0, response.1);
     }
     let ip = remot_addr.ip().to_string();
     if login.is_none() {
@@ -248,5 +242,104 @@ pub async fn email_exists(
             Status::InternalServerError,
             Err("Database error.".to_string()),
         ),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use database::Database;
+    use rocket::{
+        http::{Header, Status},
+        local::asynchronous::Client,
+    };
+    use testcontainers::clients::Cli;
+
+    use crate::testing::{self, get_test_rocket, MongoContainer};
+
+    #[rocket::async_test]
+    async fn test_from_unknown_token() {
+        let docker = Cli::docker();
+        let container = &docker.run(MongoContainer::default_env());
+        let client = Client::tracked(get_test_rocket(&container)).await.unwrap();
+
+        let website_user = testing::get_user(
+            &client.rocket().state::<Database>().unwrap().user_manager,
+            database::group::Group::Website,
+        )
+        .await;
+
+        let token = "NO_TOKEN";
+        let response = client
+            .get(format!("/user/token/{token}"))
+            .header(Header::new(
+                "X-User-Token",
+                format!("{}", website_user.logins.get(0).unwrap().token.0),
+            ))
+            .dispatch()
+            .await;
+
+        assert_eq!(response.status(), Status::NotFound);
+        assert_eq!(
+            response.into_string().await.unwrap(),
+            format!("User not found with token: {token}")
+        );
+    }
+
+    #[rocket::async_test]
+    async fn test_from_token() {
+        let docker = Cli::docker();
+        let container = &docker.run(MongoContainer::default_env());
+        let client = Client::tracked(get_test_rocket(&container)).await.unwrap();
+
+        let website_user = testing::get_user(
+            &client.rocket().state::<Database>().unwrap().user_manager,
+            database::group::Group::Website,
+        )
+        .await;
+        let website_token = &website_user.logins.get(0).unwrap().token.0;
+
+        let response = client
+            .get(format!("/user/token/{website_token}"))
+            .header(Header::new("X-User-Token", format!("{}", website_token)))
+            .dispatch()
+            .await;
+
+        assert_eq!(response.status(), Status::Ok);
+    }
+
+    #[rocket::async_test]
+    async fn unauthorized_test_from_token() {
+        let docker = Cli::docker();
+        let container = &docker.run(MongoContainer::default_env());
+        let client = Client::tracked(get_test_rocket(&container)).await.unwrap();
+
+        let website_user = testing::get_user(
+            &client.rocket().state::<Database>().unwrap().user_manager,
+            database::group::Group::User,
+        )
+        .await;
+        let website_token = &website_user.logins.get(0).unwrap().token.0;
+
+        let response = client
+            .get(format!("/user/token/{website_token}"))
+            .header(Header::new("X-User-Token", format!("{}", website_token)))
+            .dispatch()
+            .await;
+
+        assert_eq!(response.status(), Status::Unauthorized);
+    }
+
+    #[rocket::async_test]
+    async fn forbidden_test_from_token() {
+        let docker = Cli::docker();
+        let container = &docker.run(MongoContainer::default_env());
+        let client = Client::tracked(get_test_rocket(&container)).await.unwrap();
+
+        let token = "NO_TOKEN";
+
+        let response = client.get(format!("/user/token/{token}")).dispatch().await;
+
+        assert_eq!(response.status(), Status::Forbidden);
     }
 }

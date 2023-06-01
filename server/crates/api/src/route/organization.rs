@@ -19,11 +19,8 @@ pub async fn from_id(
     database: &State<Database>,
     id: u64,
 ) -> Custom<Result<Json<Organization>, String>> {
-    if matches!(user_data.group, Group::Website | Group::Server) == false {
-        return Custom(
-            Status::Forbidden,
-            Err("Website or Server group required.".into()),
-        );
+    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
+        return Custom(response.0, Err(response.1));
     }
     match database.organization_manager.from_id(&id.to_string()).await {
         Ok(organization) if organization.is_some() => {
@@ -45,8 +42,8 @@ pub async fn update(
     id: String,
     organization_update: Json<Vec<OrganizationUpdate>>,
 ) -> Custom<Result<Json<bool>, String>> {
-    if matches!(user_data.group, Group::Website) == false {
-        return Custom(Status::Forbidden, Err("Website group required.".into()));
+    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
+        return Custom(response.0, Err(response.1));
     }
 
     match database
@@ -67,8 +64,8 @@ pub async fn delete_from_id(
     database: &State<Database>,
     id: String,
 ) -> Custom<Result<Json<bool>, String>> {
-    if matches!(user_data.group, Group::Website) == false {
-        return Custom(Status::Forbidden, Err("Website group required.".into()));
+    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
+        return Custom(response.0, Err(response.1));
     }
     match database.organization_manager.delete_organization(id).await {
         Ok(_) => Custom(Status::Ok, Ok(Json(true))),
@@ -86,8 +83,8 @@ pub async fn create(
     database: &State<Database>,
     organization: Json<OrganizationInit>,
 ) -> Custom<String> {
-    if matches!(user_data.group, Group::Website) == false {
-        return Custom(Status::Forbidden, "Website group required.".into());
+    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
+        return Custom(response.0, response.1);
     }
 
     let raw_organization = organization.0;

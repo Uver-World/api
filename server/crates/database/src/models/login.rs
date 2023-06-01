@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{authentication::Authentication, token::Token};
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema)]
+#[derive(Deserialize, Serialize, Debug, JsonSchema, Clone)]
 pub struct Login {
     ip: String,
     timestamp: String,
