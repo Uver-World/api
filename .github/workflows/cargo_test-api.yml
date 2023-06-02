@@ -34,4 +34,4 @@ jobs:
 
     - name: Build and test
       run: |
-        cd server/crates/api && cargo test
+        cd server/crates/api && cargo +nightly test
