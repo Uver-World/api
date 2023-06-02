@@ -12,47 +12,15 @@ mod route_delete_from_id;
 mod route_delete_from_token;
 mod route_from_id;
 mod route_from_token;
+mod route_renew;
 mod route_update;
 
 pub use route_delete_from_id::*;
 pub use route_delete_from_token::*;
 pub use route_from_id::*;
 pub use route_from_token::*;
+pub use route_renew::*;
 pub use route_update::*;
-
-/// Renew a user token with either the user credentials, or with the serverid
-///
-/// To regenerate a server's token, you have to be part of the Website group
-#[openapi(tag = "Users")]
-#[post("/renew", data = "<login>", format = "application/json")] // <- route attribute
-pub async fn renew(
-    user_data: UserData,
-    database: &State<Database>,
-    login: Json<Login>,
-    remot_addr: SocketAddr,
-) -> Custom<String> {
-    let ip = remot_addr.ip().to_string();
-    match login.0 {
-        Login::Credentials(credentials) => {
-            let auth = Authentication::Credentials(credentials);
-            let user = auth.get(&database.user_manager.users).await;
-            helper::renew_token(user, ip, auth, &database.user_manager).await
-        }
-        Login::UserId(user_id) => {
-            if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-                return Custom(response.0, response.1);
-            }
-            let user = database.user_manager.from_id(&user_id).await;
-            helper::renew_token(
-                user.map_err(|err| err.to_string()),
-                ip,
-                Authentication::None,
-                &database.user_manager,
-            )
-            .await
-        }
-    }
-}
 
 /// Register a new user
 ///

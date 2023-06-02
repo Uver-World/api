@@ -1,4 +1,4 @@
-use crate::{model::login::Login, Server};
+use crate::{model::login::Login, RequestError, Server};
 use database::{
     authentication::{Authentication, Credentials},
     managers::UserManager,
@@ -12,17 +12,31 @@ pub async fn renew_token(
     ip: String,
     auth: Authentication,
     usermanager: &UserManager,
-) -> Custom<String> {
+) -> Custom<Result<String, Json<RequestError>>> {
     match user {
         Ok(user) if user.is_some() => {
             let login = database::login::Login::new(ip, Server::current_time(), auth);
 
             user.unwrap().upload_token(&login, &usermanager.users).await;
 
-            Custom(Status::Ok, login.token.0)
+            Custom(Status::Ok, Ok(login.token.0))
         }
-        Ok(_) => Custom(Status::NotFound, "User could not be found".into()),
-        Err(_err) => Custom(Status::InternalServerError, "Database error".into()),
+        Ok(_) => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(
+                Status::NotFound,
+                "User could not be found.".to_string(),
+            ))
+            .into()),
+        ),
+        Err(_err) => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(
+                Status::InternalServerError,
+                "A database error occured.".to_string(),
+            ))
+            .into()),
+        ),
     }
 }
 

@@ -48,15 +48,15 @@ mod tests {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
             let test_user = testing::get_user(database, Group::User).await;
-            let website_user = testing::get_user(database, Group::Website).await;
-            let website_token = website_user.get_token().unwrap();
+            let request_user = testing::get_user(database, Group::Website).await;
+            let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
                 &client,
                 Method::Delete,
                 format!("/user/id/{}", test_user.unique_id),
                 None,
-                Some(website_token.to_string()),
+                Some(request_token.to_string()),
             )
             .await;
 

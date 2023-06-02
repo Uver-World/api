@@ -1,9 +1,9 @@
 use database::authentication::Credentials;
 use rocket_okapi::okapi::schemars;
 use rocket_okapi::okapi::schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug, JsonSchema)]
+#[derive(Deserialize, Debug, JsonSchema, Serialize)]
 pub enum Login {
     Credentials(Credentials),
     UserId(String),
