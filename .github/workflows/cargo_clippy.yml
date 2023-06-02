@@ -16,10 +16,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Install Rust
+    - name: Install Rust nightly # ATM, the feature "let_chains" is unstable, so we have to use nightly for our testing and release.
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: stable
+        toolchain: nightly
         components: clippy
 
     - name: Run cargo clippy
