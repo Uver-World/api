@@ -44,7 +44,7 @@ pub async fn update_auth(
     id: String,
     login: Json<Login>,
     usermanager: &UserManager,
-) -> Custom<Result<Json<bool>, String>> {
+) -> Custom<Result<Json<bool>, Json<RequestError>>> {
     match login.0 {
         Login::Credentials(credentials) => {
             match usermanager
@@ -59,10 +59,24 @@ pub async fn update_auth(
                 .await
             {
                 Ok(_) => Custom(Status::Ok, Ok(Json(true))),
-                Err(_) => Custom(Status::InternalServerError, Ok(Json(false))),
+                Err(_) => Custom(
+                    Status::Ok,
+                    Err(RequestError::from(Custom(
+                        Status::InternalServerError,
+                        "A database error occured.".into(),
+                    ))
+                    .into()),
+                ),
             }
         }
-        _ => Custom(Status::BadRequest, Ok(Json(false))),
+        _ => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(
+                Status::BadRequest,
+                "Credentials is the only login method currently supported".into(),
+            ))
+            .into()),
+        ),
     }
 }
 
