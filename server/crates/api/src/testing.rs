@@ -60,8 +60,18 @@ pub async fn dispatch_request(
 ) -> LocalResponse {
     let mut request = match method {
         Method::Get => client.get(uri),
-        Method::Post => client.post(uri).body(body.unwrap_or_default()),
-        Method::Put => client.put(uri).body(body.unwrap_or_default()),
+        Method::Post => client
+            .post(uri)
+            .body(body.unwrap_or_default())
+            .header(Header::new("content-type", "application/json")),
+        Method::Patch => client
+            .patch(uri)
+            .body(body.unwrap_or_default())
+            .header(Header::new("content-type", "application/json")),
+        Method::Put => client
+            .put(uri)
+            .body(body.unwrap_or_default())
+            .header(Header::new("content-type", "application/json")),
         Method::Delete => client.delete(uri),
         _ => panic!("Unsupported HTTP method"),
     };

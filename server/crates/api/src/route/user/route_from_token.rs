@@ -40,6 +40,31 @@ mod tests {
     };
 
     #[rocket::async_test]
+    async fn test_from_token() {
+        run_test(|client| async move {
+            let database = client.rocket().state::<Database>().unwrap();
+            let test_user = testing::get_user(database, Group::User).await;
+            let request_user = testing::get_user(database, Group::Website).await;
+            let request_token = request_user.get_token().unwrap();
+
+            let response = dispatch_request(
+                &client,
+                Method::Get,
+                format!("/user/token/{}", test_user.get_token().unwrap()),
+                None,
+                Some(request_token.to_string()),
+            )
+            .await;
+
+            assert_eq!(response.status(), Status::Ok);
+            let user = response.into_json::<User>().await.unwrap();
+            assert_eq!(user.unique_id, test_user.unique_id);
+            assert_eq!(user.username, test_user.username);
+        })
+        .await;
+    }
+
+    #[rocket::async_test]
     async fn test_from_unknown_token() {
         run_test(|client| async move {
             let request_user =
@@ -64,31 +89,6 @@ mod tests {
                 request_error.message,
                 format!("User not found with token: {token}")
             );
-        })
-        .await;
-    }
-
-    #[rocket::async_test]
-    async fn test_from_token() {
-        run_test(|client| async move {
-            let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
-            let request_token = request_user.get_token().unwrap();
-
-            let response = dispatch_request(
-                &client,
-                Method::Get,
-                format!("/user/token/{}", test_user.get_token().unwrap()),
-                None,
-                Some(request_token.to_string()),
-            )
-            .await;
-
-            assert_eq!(response.status(), Status::Ok);
-            let user = response.into_json::<User>().await.unwrap();
-            assert_eq!(user.unique_id, test_user.unique_id);
-            assert_eq!(user.username, test_user.username);
         })
         .await;
     }

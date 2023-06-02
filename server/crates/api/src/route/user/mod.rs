@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use database::{authentication::Authentication, group::Group, user::UserUpdate, Database};
+use database::{authentication::Authentication, group::Group, Database};
 use rocket::{http::Status, response::status::Custom, serde::json::Json, *};
 use rocket_okapi::openapi;
 
@@ -10,37 +10,11 @@ mod helper;
 
 mod route_from_id;
 mod route_from_token;
+mod route_update;
 
 pub use route_from_id::*;
 pub use route_from_token::*;
-
-/// Update the user informations from its token
-#[openapi(tag = "Users")]
-#[patch("/token/<token>", data = "<user_update>", format = "application/json")] // <- route attribute
-pub async fn update(
-    user_data: UserData,
-    database: &State<Database>,
-    token: String,
-    user_update: Json<Vec<UserUpdate>>,
-) -> Custom<Result<Json<bool>, String>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, Err(response.1));
-    }
-    match database.user_manager.from_token(&token).await {
-        Ok(user) if user.is_some() => {
-            let uuid = user.unwrap().unique_id;
-            match database.user_manager.update_user(uuid, user_update.0).await {
-                Ok(_) => Custom(Status::Ok, Ok(Json(true))),
-                Err(err) => Custom(Status::InternalServerError, Err(err.to_string())),
-            }
-        }
-
-        _ => Custom(
-            Status::InternalServerError,
-            Err(format!("User not found with token: {token}")),
-        ),
-    }
-}
+pub use route_update::*;
 
 /// Delete the user linked to the token
 #[openapi(tag = "Users")]

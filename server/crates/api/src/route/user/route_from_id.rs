@@ -40,35 +40,6 @@ mod tests {
     };
 
     #[rocket::async_test]
-    async fn test_from_unknown_id() {
-        run_test(|client| async move {
-            let website_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website)
-                    .await;
-            let website_token = website_user.get_token().unwrap();
-            let id = "NO_ID";
-
-            let response = dispatch_request(
-                &client,
-                Method::Get,
-                format!("/user/id/{id}"),
-                None,
-                Some(website_token.to_string()),
-            )
-            .await;
-
-            assert_eq!(response.status(), Status::Ok);
-            let request_error = response.into_json::<RequestError>().await.unwrap();
-            assert_eq!(request_error.code, 404);
-            assert_eq!(
-                request_error.message,
-                format!("User not found with id: {id}")
-            );
-        })
-        .await;
-    }
-
-    #[rocket::async_test]
     async fn test_from_id() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
@@ -89,6 +60,35 @@ mod tests {
             let user = response.into_json::<User>().await.unwrap();
             assert_eq!(user.unique_id, test_user.unique_id);
             assert_eq!(user.username, test_user.username);
+        })
+        .await;
+    }
+
+    #[rocket::async_test]
+    async fn test_from_unknown_id() {
+        run_test(|client| async move {
+            let request_user =
+                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website)
+                    .await;
+            let request_token = request_user.get_token().unwrap();
+            let id = "NO_ID";
+
+            let response = dispatch_request(
+                &client,
+                Method::Get,
+                format!("/user/id/{id}"),
+                None,
+                Some(request_token.to_string()),
+            )
+            .await;
+
+            assert_eq!(response.status(), Status::Ok);
+            let request_error = response.into_json::<RequestError>().await.unwrap();
+            assert_eq!(request_error.code, 404);
+            assert_eq!(
+                request_error.message,
+                format!("User not found with id: {id}")
+            );
         })
         .await;
     }
