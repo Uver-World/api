@@ -22,10 +22,7 @@ jobs:
         toolchain: stable
         components: clippy
 
-    - name: Change directory
-      run: cd server/
-
     - name: Run cargo clippy
-      uses: actions-rs/cargo@v1
-      with:
-        command: clippy
+      run: |
+        cd server
+        cargo clippy
