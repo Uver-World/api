@@ -99,12 +99,12 @@ impl UserManager {
             self.from_id(uuid)
                 .await
                 .map_err(|err| err.to_string())?
-                .ok_or("User not found".to_string())?
+                .ok_or(format!("User not found with id: {uuid}"))?
         } else if let Some(token) = token {
             self.from_token(token)
                 .await
                 .map_err(|err| err.to_string())?
-                .ok_or("User not found".to_string())?
+                .ok_or(format!("User not found with token: {token}"))?
         } else {
             return Ok(None);
         };

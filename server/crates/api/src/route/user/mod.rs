@@ -8,30 +8,15 @@ use crate::model::{login::Login, user_token::UserData};
 
 mod helper;
 
+mod route_delete_from_token;
 mod route_from_id;
 mod route_from_token;
 mod route_update;
 
+pub use route_delete_from_token::*;
 pub use route_from_id::*;
 pub use route_from_token::*;
 pub use route_update::*;
-
-/// Delete the user linked to the token
-#[openapi(tag = "Users")]
-#[delete("/token/<token>")] // <- route attribute
-pub async fn delete_from_token(
-    user_data: UserData,
-    database: &State<Database>,
-    token: String,
-) -> Custom<Result<Json<bool>, String>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, Err(response.1));
-    }
-    match database.user_manager.delete_user(None, Some(&token)).await {
-        Ok(_) => Custom(Status::Ok, Ok(Json(true))),
-        Err(err) => Custom(Status::InternalServerError, Err(err)),
-    }
-}
 
 /// Delete the user from its id
 #[openapi(tag = "Users")]
