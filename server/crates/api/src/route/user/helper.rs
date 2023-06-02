@@ -70,7 +70,7 @@ pub async fn register(
     auth: Authentication,
     ip: String,
     usermanager: &UserManager,
-) -> Custom<String> {
+) -> Custom<Result<String, Json<RequestError>>> {
     let result = auth
         .register(
             Server::current_time(),
@@ -85,9 +85,15 @@ pub async fn register(
 
             user.upload_token(&login, &usermanager.users).await;
 
-            Custom(Status::Ok, login.token.0)
+            Custom(Status::Ok, Ok(login.token.0))
         }
-        Ok(_) => Custom(Status::Conflict, "User already exists.".into()),
-        Err(error) => Custom(Status::InternalServerError, error),
+        Ok(_) => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(Status::Conflict, "User already exists.".into())).into()),
+        ),
+        Err(error) => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(Status::InternalServerError, error)).into()),
+        ),
     }
 }

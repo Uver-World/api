@@ -1,10 +1,8 @@
-use std::net::SocketAddr;
-
-use database::{authentication::Authentication, group::Group, Database};
+use database::Database;
 use rocket::{http::Status, response::status::Custom, serde::json::Json, *};
 use rocket_okapi::openapi;
 
-use crate::model::{login::Login, user_token::UserData};
+use crate::model::login::Login;
 
 mod helper;
 
@@ -12,6 +10,7 @@ mod route_delete_from_id;
 mod route_delete_from_token;
 mod route_from_id;
 mod route_from_token;
+mod route_register;
 mod route_renew;
 mod route_update;
 
@@ -19,40 +18,9 @@ pub use route_delete_from_id::*;
 pub use route_delete_from_token::*;
 pub use route_from_id::*;
 pub use route_from_token::*;
+pub use route_register::*;
 pub use route_renew::*;
 pub use route_update::*;
-
-/// Register a new user
-///
-/// If "Credentials" is being used, the user will have an authentication method of type credentials by default
-///
-/// Otherwise please don't use any
-///
-/// Requires 'Website' group
-#[openapi(tag = "Users")]
-#[post("/register", data = "<login>", format = "application/json")] // <- route attribute
-pub async fn register(
-    user_data: UserData,
-    database: &State<Database>,
-    login: Option<Json<Login>>,
-    remot_addr: SocketAddr,
-) -> Custom<String> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, response.1);
-    }
-    let ip = remot_addr.ip().to_string();
-    if login.is_none() {
-        return helper::register(Authentication::None, ip, &database.user_manager).await;
-    }
-    let login = login.unwrap();
-    match login.0 {
-        Login::Credentials(credentials) => {
-            let auth = Authentication::Credentials(credentials);
-            helper::register(auth, ip, &database.user_manager).await
-        }
-        _ => Custom(Status::BadRequest, "Credentials are required.".into()),
-    }
-}
 
 /// Update the way an user authenticate itself
 ///
