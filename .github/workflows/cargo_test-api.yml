@@ -15,26 +15,22 @@ on:
 jobs:
   docker_test:
     runs-on: ubuntu-latest
-    services:
-      docker:
-        image: docker:dind
-        env:
-          DOCKER_DRIVER: overlay
-          DOCKER_HOST: tcp://localhost:2375
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+
+    - name: Install Docker
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker.io
+        sudo systemctl start docker
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         components: rustc, cargo
-
-    - name: Setup Docker
-      run: |
-        sudo service docker start
 
     - name: Build and test
       run: |
