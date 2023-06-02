@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Deserialize, Serialize, JsonSchema, Debug)]
 pub struct Token(pub String);
 
-impl Token {
-    pub fn new() -> Self {
+impl Default for Token {
+    fn default() -> Self {
         let raw_token = rand::thread_rng()
             .sample_iter(&Alphanumeric)
             .take(32)

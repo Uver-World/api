@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 mod api;
 mod server;
 
@@ -10,7 +12,11 @@ pub mod testing;
 pub use crate::{api::*, server::*};
 
 use reqwest::{Error, Response};
+use rocket::response::status::Custom;
 use rocket::serde::DeserializeOwned;
+use rocket_okapi::okapi::schemars;
+use rocket_okapi::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 pub async fn parse_request<T: DeserializeOwned>(
     res: Result<Response, Error>,
@@ -26,5 +32,20 @@ pub async fn parse_request<T: DeserializeOwned>(
         }
         Ok(res) => Err(format!("[{ok_response}]\nlog={res:#?}")),
         Err(err) => Err(format!("reqwest error: {err}")),
+    }
+}
+
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct RequestError {
+    pub code: u16,
+    pub message: String,
+}
+
+impl From<Custom<String>> for RequestError {
+    fn from(value: Custom<String>) -> Self {
+        Self {
+            code: value.0.code,
+            message: value.1,
+        }
     }
 }

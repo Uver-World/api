@@ -11,7 +11,7 @@ fn export_env() -> Result<(), String> {
             .long("envfile")
             .short('e'),
     );
-    let matches = app.clone().get_matches();
+    let matches = app.get_matches();
     let env_file: Option<&String> = matches.get_one("envfile");
 
     if let Some(env_file) = env_file {

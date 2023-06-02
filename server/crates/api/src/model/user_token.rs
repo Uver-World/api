@@ -24,7 +24,7 @@ impl UserData {
         if matches!(self.group, Group::Guest) {
             return Err(Custom(Status::Forbidden, "Authentication required.".into()));
         }
-        if groups.contains(&self.group) == false {
+        if !groups.contains(&self.group) {
             return Err(Custom(
                 Status::Unauthorized,
                 format!("You need to be part of one of the following groups: [{groups:?}]."),
@@ -62,8 +62,8 @@ impl<'r> FromRequest<'r> for UserData {
 
                 let user = db.user_manager.from_token(token).await;
 
-                if user.is_ok() && user.as_ref().unwrap().is_some() {
-                    let user = user.unwrap().unwrap();
+                if user.is_ok() && let Some(user) = user.as_ref().unwrap() {
+                    let user = user.clone();
                     return Outcome::Success(UserData::new(Some(user.unique_id), user.group));
                 }
                 return Outcome::Success(UserData::new(None, Group::Guest));

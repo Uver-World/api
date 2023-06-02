@@ -14,7 +14,7 @@ pub struct Login {
 
 impl Login {
     pub fn new(ip: String, timestamp: u128, method: Authentication) -> Self {
-        let token = Token::new();
+        let token = Token::default();
 
         Self {
             ip,

@@ -34,6 +34,11 @@ pub struct User {
 }
 
 impl User {
+    /// Returns the last token
+    pub fn get_token(&self) -> Option<&String> {
+        Some(&self.logins.last()?.token.0)
+    }
+
     pub async fn upload_token(&self, login: &Login, users: &Collection<User>) {
         let _ = users
             .update_one(

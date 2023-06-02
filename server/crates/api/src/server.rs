@@ -10,6 +10,7 @@ pub struct Host {
 
 /// Project server structure
 /// All services are registered here
+#[derive(Default)]
 pub struct Server {}
 
 impl Server {
@@ -18,10 +19,6 @@ impl Server {
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap_or_default()
             .as_millis()
-    }
-
-    pub fn new() -> Self {
-        Self {}
     }
 
     pub fn generate_unique_id() -> u64 {

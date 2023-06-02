@@ -79,8 +79,6 @@ impl Authentication {
     }
 
     pub fn token(&self) -> Option<String> {
-        match &self {
-            _ => None,
-        }
+        None
     }
 }
