@@ -1,4 +1,5 @@
 #![feature(let_chains)]
+#![feature(async_closure)]
 
 mod api;
 mod server;

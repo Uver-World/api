@@ -1,11 +1,6 @@
 use std::net::SocketAddr;
 
-use database::{
-    authentication::Authentication,
-    group::Group,
-    user::{User, UserUpdate},
-    Database,
-};
+use database::{authentication::Authentication, group::Group, user::UserUpdate, Database};
 use rocket::{http::Status, response::status::Custom, serde::json::Json, *};
 use rocket_okapi::openapi;
 
@@ -13,29 +8,11 @@ use crate::model::{login::Login, user_token::UserData};
 
 mod helper;
 
+mod route_from_id;
 mod route_from_token;
 
+pub use route_from_id::*;
 pub use route_from_token::*;
-
-/// Retrieve the user informations from its unique identifier
-#[openapi(tag = "Users")]
-#[get("/id/<id>")] // <- route attribute
-pub async fn from_id(
-    user_data: UserData,
-    database: &State<Database>,
-    id: u64,
-) -> Custom<Result<Json<User>, String>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
-        return Custom(response.0, Err(response.1));
-    }
-    match database.user_manager.from_id(&id.to_string()).await {
-        Ok(user) if user.is_some() => Custom(Status::Ok, Ok(Json(user.unwrap()))),
-        _ => Custom(
-            Status::NotFound,
-            Err(format!("User not found with id: {id}")),
-        ),
-    }
-}
 
 /// Update the user informations from its token
 #[openapi(tag = "Users")]

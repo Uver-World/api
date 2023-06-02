@@ -4,7 +4,7 @@ use rocket_okapi::okapi::schemars;
 use rocket_okapi::okapi::schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Debug, JsonSchema, Clone, PartialEq)]
+#[derive(Deserialize, Serialize, Debug, JsonSchema, Clone, PartialEq, Copy)]
 pub enum Group {
     /// Guest has access to all public routes, might be an unknown user, or an user that didn't buy the licence
     Guest,
