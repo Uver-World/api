@@ -21,8 +21,8 @@ jobs:
         
       - name: Install Docker service
         run: |
-          curl -fsSL https://get.docker.com/rootless | sh
-          system-ctl --user start docker.service
+          curl -fsSL https://get.docker.com -o get-docker.sh
+          sh get-docker.sh
 
       - name: Generate code coverage
         run: |
