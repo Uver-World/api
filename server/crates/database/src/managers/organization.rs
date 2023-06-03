@@ -64,7 +64,7 @@ impl OrganizationManager {
 
     pub async fn update_organization(
         &self,
-        uuid: String,
+        uuid: &str,
         organization_update: Vec<OrganizationUpdate>,
     ) -> Result<UpdateResult, Error> {
         let filter = doc! {"unique_id": uuid.to_string()};

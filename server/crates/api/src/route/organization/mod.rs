@@ -1,8 +1,4 @@
-use database::{
-    group::Group,
-    organization::{Organization, OrganizationUpdate},
-    Database,
-};
+use database::{group::Group, organization::Organization, Database};
 use rocket::{http::Status, response::status::Custom, serde::json::Json, *};
 use rocket_okapi::openapi;
 
@@ -13,32 +9,11 @@ use crate::{
 
 mod route_delete_from_id;
 mod route_from_id;
+mod route_update;
 
 pub use route_delete_from_id::*;
 pub use route_from_id::*;
-
-/// Update the organization informations from its id
-#[openapi(tag = "Organizations")]
-#[patch("/<id>", data = "<organization_update>", format = "application/json")] // <- route attribute
-pub async fn update(
-    user_data: UserData,
-    database: &State<Database>,
-    id: String,
-    organization_update: Json<Vec<OrganizationUpdate>>,
-) -> Custom<Result<Json<bool>, String>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
-        return Custom(response.0, Err(response.1));
-    }
-
-    match database
-        .organization_manager
-        .update_organization(id, organization_update.0)
-        .await
-    {
-        Ok(_) => Custom(Status::Ok, Ok(Json(true))),
-        Err(err) => Custom(Status::InternalServerError, Err(err.to_string())),
-    }
-}
+pub use route_update::*;
 
 /// Register a new organization
 ///
