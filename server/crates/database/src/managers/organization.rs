@@ -53,7 +53,7 @@ impl OrganizationManager {
         }
     }
 
-    pub async fn delete_organization(&self, uuid: String) -> Result<Option<DeleteResult>, String> {
+    pub async fn delete_organization(&self, uuid: &str) -> Result<Option<DeleteResult>, String> {
         Ok(Some(
             self.organizations
                 .delete_one(doc! {"unique_id": uuid}, None)
