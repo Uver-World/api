@@ -8,12 +8,3 @@ pub enum Login {
     Credentials(Credentials),
     UserId(String),
 }
-
-impl Login {
-    pub fn name(&self) -> String {
-        match self {
-            Self::Credentials(_) => "Credentials".to_owned(),
-            Self::UserId(_) => "UserId".to_owned(),
-        }
-    }
-}

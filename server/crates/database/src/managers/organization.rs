@@ -26,14 +26,6 @@ impl OrganizationManager {
             != 0)
     }
 
-    pub async fn uuid_exists(&self, uuid: String) -> Result<bool, Error> {
-        Ok(self
-            .organizations
-            .count_documents(doc! { "unique_id": uuid }, None)
-            .await?
-            != 0)
-    }
-
     pub async fn create_organization(
         &self,
         organization: &Organization,

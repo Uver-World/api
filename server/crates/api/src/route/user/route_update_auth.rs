@@ -76,6 +76,7 @@ mod tests {
     use crate::{
         model::login::Login,
         testing::{self, dispatch_request, run_test},
+        RequestError,
     };
 
     #[rocket::async_test]
@@ -156,7 +157,30 @@ mod tests {
     }
 
     #[rocket::async_test]
-    async fn forbidden_test_register() {
+    async fn incorrect_test_update_auth() {
+        run_test(|client| async move {
+            let database = client.rocket().state::<Database>().unwrap();
+            let request_user = testing::get_user(database, Group::User).await;
+            let request_token = request_user.get_token().unwrap();
+
+            let response = dispatch_request(
+                &client,
+                Method::Patch,
+                format!("/user/update_auth"),
+                Some(serde_json::to_string(&Login::UserId("NO_ID".to_string())).unwrap()),
+                Some(request_token.to_string()),
+            )
+            .await;
+
+            assert_eq!(response.status(), Status::Ok);
+            let response = response.into_json::<RequestError>().await.unwrap();
+            assert_eq!(response.code, 400);
+        })
+        .await;
+    }
+
+    #[rocket::async_test]
+    async fn forbidden_test_update_auth() {
         run_test(|client| async move {
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
