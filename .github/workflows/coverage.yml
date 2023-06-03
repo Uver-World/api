@@ -12,17 +12,24 @@ jobs:
   test:
     name: coverage
     runs-on: ubuntu-latest
-    container:
-      image: xd009642/tarpaulin:develop-nightly
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
         
-      - name: Install Docker service
+      - name: Start Docker service
         run: |
-          curl -fsSL https://get.docker.com -o get-docker.sh
-          sh get-docker.sh
-          service docker start
+          sudo systemctl start docker
+          
+      - name: Install Rust nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rustc, cargo
+          
+      - name: Install code coverage tool
+        run: |
+          cargo +nightly install cargo-tarpaulin
 
       - name: Generate code coverage
         run: |
