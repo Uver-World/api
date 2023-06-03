@@ -26,14 +26,6 @@ impl OrganizationManager {
             != 0)
     }
 
-    pub async fn uuid_exists(&self, uuid: String) -> Result<bool, Error> {
-        Ok(self
-            .organizations
-            .count_documents(doc! { "unique_id": uuid }, None)
-            .await?
-            != 0)
-    }
-
     pub async fn create_organization(
         &self,
         organization: &Organization,
@@ -53,7 +45,7 @@ impl OrganizationManager {
         }
     }
 
-    pub async fn delete_organization(&self, uuid: String) -> Result<Option<DeleteResult>, String> {
+    pub async fn delete_organization(&self, uuid: &str) -> Result<Option<DeleteResult>, String> {
         Ok(Some(
             self.organizations
                 .delete_one(doc! {"unique_id": uuid}, None)
@@ -64,7 +56,7 @@ impl OrganizationManager {
 
     pub async fn update_organization(
         &self,
-        uuid: String,
+        uuid: &str,
         organization_update: Vec<OrganizationUpdate>,
     ) -> Result<UpdateResult, Error> {
         let filter = doc! {"unique_id": uuid.to_string()};

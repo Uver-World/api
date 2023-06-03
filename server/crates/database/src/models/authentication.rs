@@ -9,13 +9,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::{group::Group, user::User};
 
-#[derive(Serialize, Debug, Deserialize, Clone, JsonSchema)]
+#[derive(Serialize, Debug, Deserialize, Clone, JsonSchema, PartialEq)]
 pub enum Authentication {
     Credentials(Credentials),
     None,
 }
 
-#[derive(Deserialize, Debug, Serialize, Clone, JsonSchema)]
+#[derive(Deserialize, Debug, Serialize, Clone, JsonSchema, PartialEq)]
 pub struct Credentials {
     pub email: String,
     pub password: String,

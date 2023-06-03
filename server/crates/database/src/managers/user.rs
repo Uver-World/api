@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use mongodb::{
-    bson::{doc, to_bson, Bson, Document},
+    bson::{doc, to_bson, Bson},
     error::Error,
     results::{DeleteResult, InsertOneResult, UpdateResult},
     Collection,
@@ -18,26 +18,10 @@ impl UserManager {
         Self { users }
     }
 
-    pub async fn username_exists(&self, username: String) -> Result<bool, Error> {
-        Ok(self
-            .users
-            .count_documents(doc! { "username": username }, None)
-            .await?
-            != 0)
-    }
-
     pub async fn email_exists(&self, email: String) -> Result<bool, Error> {
         Ok(self
             .users
             .count_documents(doc! { "authentication.Credentials.email": email }, None)
-            .await?
-            != 0)
-    }
-
-    pub async fn uuid_exists(&self, uuid: String) -> Result<bool, Error> {
-        Ok(self
-            .users
-            .count_documents(doc! { "unique_id": uuid }, None)
             .await?
             != 0)
     }
@@ -69,27 +53,6 @@ impl UserManager {
         }
     }
 
-    pub async fn get_user(
-        &self,
-        username: Option<&str>,
-        uuid: Option<&str>,
-    ) -> Result<Option<User>, Error> {
-        let mut doc: Document = Document::new();
-        if uuid.is_some() {
-            doc = doc! {"unique_id": uuid.unwrap()};
-        }
-        if username.is_some() {
-            doc = doc! {"username": username.unwrap()};
-        }
-        if doc.is_empty() {
-            return Ok(None);
-        }
-        match self.users.find_one(doc, None).await? {
-            Some(user) => Ok(Some(user)),
-            None => Ok(None),
-        }
-    }
-
     pub async fn delete_user(
         &self,
         uuid: Option<&str>,
@@ -99,12 +62,12 @@ impl UserManager {
             self.from_id(uuid)
                 .await
                 .map_err(|err| err.to_string())?
-                .ok_or("User not found".to_string())?
+                .ok_or(format!("User not found with id: {uuid}"))?
         } else if let Some(token) = token {
             self.from_token(token)
                 .await
                 .map_err(|err| err.to_string())?
-                .ok_or("User not found".to_string())?
+                .ok_or(format!("User not found with token: {token}"))?
         } else {
             return Ok(None);
         };

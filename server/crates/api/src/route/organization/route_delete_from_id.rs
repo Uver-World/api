@@ -1,29 +1,33 @@
-use database::{group::Group, user::User, Database};
-use rocket::{get, http::Status, response::status::Custom, serde::json::Json, State};
+use database::{group::Group, Database};
+use rocket::{delete, http::Status, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
 use crate::{model::user_token::UserData, RequestError};
 
-/// Retrieve the user informations from its token
-#[openapi(tag = "Users")]
-#[get("/token/<token>")] // <- route attribute
-pub async fn from_token(
+/// Delete the user from its id
+#[openapi(tag = "Organizations")]
+#[delete("/<id>")] // <- route attribute
+pub async fn delete_from_id(
     user_data: UserData,
     database: &State<Database>,
-    token: String,
-) -> Custom<Result<Json<User>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
+    id: String,
+) -> Custom<Result<Json<bool>, Json<RequestError>>> {
+    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
         return Custom(response.0, Err(RequestError::from(response).into()));
     }
-    match database.user_manager.from_token(&token).await {
-        Ok(user) if user.is_some() => Custom(Status::Ok, Ok(Json(user.unwrap()))),
-        _ => Custom(
+    match database.organization_manager.delete_organization(&id).await {
+        Ok(Some(result)) if result.deleted_count > 0 => Custom(Status::Ok, Ok(Json(true))),
+        Ok(_) => Custom(
             Status::Ok,
             Err(RequestError::from(Custom(
                 Status::NotFound,
-                format!("User not found with token: {token}"),
+                format!("Organization not found with id: {id}"),
             ))
             .into()),
+        ),
+        Err(err) => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(Status::InternalServerError, err)).into()),
         ),
     }
 }
@@ -31,7 +35,7 @@ pub async fn from_token(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, user::User, Database};
+    use database::{group::Group, Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -40,43 +44,50 @@ mod tests {
     };
 
     #[rocket::async_test]
-    async fn test_from_token() {
+    async fn test_delete_from_id() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
             let test_user = testing::get_user(database, Group::User).await;
             let request_user = testing::get_user(database, Group::Website).await;
             let request_token = request_user.get_token().unwrap();
+            let test_org = testing::get_org(database, &test_user).await;
 
             let response = dispatch_request(
                 &client,
-                Method::Get,
-                format!("/user/token/{}", test_user.get_token().unwrap()),
+                Method::Delete,
+                format!("/organization/{}", &test_org.unique_id),
                 None,
                 Some(request_token.to_string()),
             )
             .await;
 
             assert_eq!(response.status(), Status::Ok);
-            let user = response.into_json::<User>().await.unwrap();
-            assert_eq!(user.unique_id, test_user.unique_id);
-            assert_eq!(user.username, test_user.username);
+            let response = response.into_json::<bool>().await.unwrap();
+            assert!(response);
+            // Organization should have been deleted
+            assert!(database
+                .organization_manager
+                .from_id(&test_org.unique_id)
+                .await
+                .unwrap()
+                .is_none());
         })
         .await;
     }
 
     #[rocket::async_test]
-    async fn test_from_unknown_token() {
+    async fn test_delete_from_unknown_id() {
         run_test(|client| async move {
             let request_user =
                 testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website)
                     .await;
             let request_token = request_user.get_token().unwrap();
-            let token = "NO_TOKEN";
+            let id = "NO_ID";
 
             let response = dispatch_request(
                 &client,
-                Method::Get,
-                format!("/user/token/{token}"),
+                Method::Delete,
+                format!("/organization/{id}"),
                 None,
                 Some(request_token.to_string()),
             )
@@ -87,24 +98,30 @@ mod tests {
             assert_eq!(request_error.code, 404);
             assert_eq!(
                 request_error.message,
-                format!("User not found with token: {token}")
+                format!("Organization not found with id: {id}")
             );
         })
         .await;
     }
 
     #[rocket::async_test]
-    async fn unauthorized_test_from_token() {
+    async fn unauthorized_test_delete_from_id() {
+        _unauthorized_test_delete_from_id(Group::User).await;
+        _unauthorized_test_delete_from_id(Group::Server).await;
+    }
+
+    async fn _unauthorized_test_delete_from_id(request_group: Group) {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
             let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::User).await;
+            let request_user = testing::get_user(database, request_group).await;
             let request_token = request_user.get_token().unwrap();
+            let test_org = testing::get_org(database, &test_user).await;
 
             let response = dispatch_request(
                 &client,
-                Method::Get,
-                format!("/user/token/{}", test_user.get_token().unwrap()),
+                Method::Delete,
+                format!("/organization/{}", test_org.unique_id),
                 None,
                 Some(request_token.to_string()),
             )
@@ -116,15 +133,16 @@ mod tests {
     }
 
     #[rocket::async_test]
-    async fn forbidden_test_from_token() {
+    async fn forbidden_test_delete_from_id() {
         run_test(|client| async move {
-            let test_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::User).await;
+            let database = client.rocket().state::<Database>().unwrap();
+            let test_user = testing::get_user(database, Group::User).await;
+            let test_org = testing::get_org(database, &test_user).await;
 
             let response = dispatch_request(
                 &client,
-                Method::Get,
-                format!("/user/token/{}", test_user.get_token().unwrap()),
+                Method::Delete,
+                format!("/organization/{}", test_org.unique_id),
                 None,
                 None,
             )

@@ -1,9 +1,12 @@
+#![feature(no_coverage)]
+
 use clap::{Arg, Command};
 use rocket::*;
 use std::path::Path;
 
 mod update_env;
 
+#[no_coverage]
 fn export_env() -> Result<(), String> {
     let app = Command::new("").subcommand_negates_reqs(true).arg(
         Arg::new("envfile")
@@ -24,6 +27,7 @@ fn export_env() -> Result<(), String> {
     Ok(())
 }
 
+#[no_coverage]
 #[launch]
 async fn rocket() -> _ {
     let env = export_env();

@@ -5,6 +5,7 @@ use std::future::Future;
 use database::authentication::Authentication;
 use database::group::Group;
 use database::login::Login;
+use database::organization::Organization;
 use database::user::User;
 use database::Database;
 use rocket::http::{Header, Method};
@@ -17,17 +18,21 @@ use crate::{get_rocket, Server};
 /// Creates an user with the desired group
 /// Adds it to the database
 /// Returns it
-pub async fn get_user(database: &Database, group: Group) -> User {
+pub async fn create_user(
+    database: &Database,
+    group: Group,
+    authentication: Authentication,
+) -> User {
     let timestamp = Server::current_time();
 
     let user = User {
-        authentication: Authentication::None,
-        unique_id: format!("{group:?}-ID"),
+        authentication: authentication.clone(),
+        unique_id: Server::generate_unique_id().to_string(),
         creation_date: timestamp.to_string(),
         logins: vec![Login::new(
             "127.0.0.1".to_string(),
             timestamp,
-            Authentication::None,
+            authentication,
         )],
         username: format!("{group:?}"),
         group,
@@ -36,6 +41,36 @@ pub async fn get_user(database: &Database, group: Group) -> User {
     let _ = database.user_manager.create_user(&user).await;
 
     user
+}
+
+/// Creates an user with the desired group
+/// Adds it to the database
+/// Returns it
+pub async fn get_user(database: &Database, group: Group) -> User {
+    create_user(database, group, Authentication::None).await
+}
+
+/// Creates an user with the desired group
+/// Adds it to the database
+/// Returns it
+pub async fn get_org(database: &Database, user: &User) -> Organization {
+    let timestamp = Server::current_time();
+    let unique_id = Server::generate_unique_id().to_string();
+
+    let organization = Organization {
+        unique_id: unique_id.clone(),
+        creation_date: timestamp.to_string(),
+        members_id: Vec::new(),
+        name: format!("name-{unique_id}"),
+        owner_id: user.unique_id.clone(),
+    };
+
+    let _ = database
+        .organization_manager
+        .create_organization(&organization)
+        .await;
+
+    organization
 }
 
 pub async fn run_test<F, Fut>(lambda_func: F)
@@ -60,8 +95,14 @@ pub async fn dispatch_request(
 ) -> LocalResponse {
     let mut request = match method {
         Method::Get => client.get(uri),
-        Method::Post => client.post(uri).body(body.unwrap_or_default()),
-        Method::Put => client.put(uri).body(body.unwrap_or_default()),
+        Method::Post => client
+            .post(uri)
+            .body(body.unwrap_or_default())
+            .header(Header::new("content-type", "application/json")),
+        Method::Patch => client
+            .patch(uri)
+            .body(body.unwrap_or_default())
+            .header(Header::new("content-type", "application/json")),
         Method::Delete => client.delete(uri),
         _ => panic!("Unsupported HTTP method"),
     };

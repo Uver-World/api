@@ -29,4 +29,5 @@ impl Fairing for CORS {
 
 #[openapi(skip)]
 #[options("/<_..>")]
+#[no_coverage]
 pub fn cors_options() {}
