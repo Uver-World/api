@@ -1,0 +1,43 @@
+name: coverage
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        
+      - name: Start Docker service
+        run: |
+          sudo systemctl start docker
+          
+      - name: Install Rust nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: rustc, cargo
+          
+      - name: Install code coverage tool
+        run: |
+          cargo +nightly install cargo-tarpaulin
+
+      - name: Generate code coverage
+        run: |
+          cd server
+          cargo +nightly tarpaulin --verbose --all --all-features --workspace --timeout 120 --out Xml
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{secrets.CODECOV_TOKEN}}
+          fail_ci_if_error: true
