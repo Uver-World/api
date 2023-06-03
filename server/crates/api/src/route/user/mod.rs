@@ -1,5 +1,3 @@
-mod helper;
-
 mod route_delete_from_id;
 mod route_delete_from_token;
 mod route_email_exists;

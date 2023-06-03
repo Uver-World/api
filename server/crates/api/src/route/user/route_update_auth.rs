@@ -1,13 +1,11 @@
-use database::{group::Group, Database};
-use rocket::{patch, response::status::Custom, serde::json::Json, State};
+use database::{authentication::Credentials, group::Group, managers::UserManager, Database};
+use rocket::{http::Status, patch, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
 use crate::{
     model::{login::Login, user_token::UserData},
     RequestError,
 };
-
-use super::helper;
 
 /// Update the way an user authenticate itself
 ///
@@ -22,7 +20,47 @@ pub async fn update_auth(
     if let Err(response) = user_data.matches_group(vec![Group::User]) {
         return Custom(response.0, Err(RequestError::from(response).into()));
     }
-    helper::update_auth(user_data.id.unwrap(), login, &database.user_manager).await
+    _update_auth(user_data.id.unwrap(), login, &database.user_manager).await
+}
+
+async fn _update_auth(
+    id: String,
+    login: Json<Login>,
+    usermanager: &UserManager,
+) -> Custom<Result<Json<bool>, Json<RequestError>>> {
+    match login.0 {
+        Login::Credentials(credentials) => {
+            match usermanager
+                .update_auth(
+                    id,
+                    &Credentials {
+                        email: credentials.email,
+                        password: credentials.password,
+                    }
+                    .new_auth(),
+                )
+                .await
+            {
+                Ok(_) => Custom(Status::Ok, Ok(Json(true))),
+                Err(_) => Custom(
+                    Status::Ok,
+                    Err(RequestError::from(Custom(
+                        Status::InternalServerError,
+                        "A database error occured.".into(),
+                    ))
+                    .into()),
+                ),
+            }
+        }
+        _ => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(
+                Status::BadRequest,
+                "Credentials is the only login method currently supported".into(),
+            ))
+            .into()),
+        ),
+    }
 }
 
 #[cfg(test)]

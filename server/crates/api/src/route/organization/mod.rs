@@ -11,27 +11,9 @@ use crate::{
     Server,
 };
 
-/// Retrieve the organization informations from its unique identifier
-#[openapi(tag = "Organizations")]
-#[get("/<id>")] // <- route attribute
-pub async fn from_id(
-    user_data: UserData,
-    database: &State<Database>,
-    id: u64,
-) -> Custom<Result<Json<Organization>, String>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
-        return Custom(response.0, Err(response.1));
-    }
-    match database.organization_manager.from_id(&id.to_string()).await {
-        Ok(organization) if organization.is_some() => {
-            Custom(Status::Ok, Ok(Json(organization.unwrap())))
-        }
-        _ => Custom(
-            Status::NotFound,
-            Err(format!("Organization not found with id: {id}")),
-        ),
-    }
-}
+mod route_from_id;
+
+pub use route_from_id::*;
 
 /// Update the organization informations from its id
 #[openapi(tag = "Organizations")]

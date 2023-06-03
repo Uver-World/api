@@ -1,13 +1,11 @@
-use database::{authentication::Authentication, group::Group, Database};
+use database::{authentication::Authentication, group::Group, managers::UserManager, Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
 use crate::{
     model::{api_socket_addr::ApiSocketAddr, login::Login, user_token::UserData},
-    RequestError,
+    RequestError, Server,
 };
-
-use super::helper;
 
 /// Register a new user
 ///
@@ -29,13 +27,13 @@ pub async fn register(
     }
     let ip = remot_addr.0.ip().to_string();
     if login.is_none() {
-        return helper::register(Authentication::None, ip, &database.user_manager).await;
+        return _register(Authentication::None, ip, &database.user_manager).await;
     }
     let login = login.unwrap();
     match login.0 {
         Login::Credentials(credentials) => {
             let auth = Authentication::Credentials(credentials);
-            helper::register(auth, ip, &database.user_manager).await
+            _register(auth, ip, &database.user_manager).await
         }
         _ => Custom(
             Status::Ok,
@@ -44,6 +42,38 @@ pub async fn register(
                 "Credentials are required.".to_string(),
             ))
             .into()),
+        ),
+    }
+}
+
+async fn _register(
+    auth: Authentication,
+    ip: String,
+    usermanager: &UserManager,
+) -> Custom<Result<String, Json<RequestError>>> {
+    let result = auth
+        .register(
+            Server::current_time(),
+            Server::generate_unique_id().to_string(),
+            &usermanager.users,
+        )
+        .await;
+    match result {
+        Ok(user) if user.is_some() => {
+            let user = user.unwrap();
+            let login = database::login::Login::new(ip, Server::current_time(), auth);
+
+            user.upload_token(&login, &usermanager.users).await;
+
+            Custom(Status::Ok, Ok(login.token.0))
+        }
+        Ok(_) => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(Status::Conflict, "User already exists.".into())).into()),
+        ),
+        Err(error) => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(Status::InternalServerError, error)).into()),
         ),
     }
 }

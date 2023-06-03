@@ -1,13 +1,13 @@
-use database::{authentication::Authentication, group::Group, Database};
-use rocket::{post, response::status::Custom, serde::json::Json, State};
+use database::{
+    authentication::Authentication, group::Group, managers::UserManager, user::User, Database,
+};
+use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
 use crate::{
     model::{api_socket_addr::ApiSocketAddr, login::Login, user_token::UserData},
-    RequestError,
+    RequestError, Server,
 };
-
-use super::helper;
 
 /// Renew an user token with either the user credentials, or with the serverid
 ///
@@ -25,14 +25,14 @@ pub async fn renew(
         Login::Credentials(credentials) => {
             let auth = Authentication::Credentials(credentials);
             let user = auth.get(&database.user_manager.users).await;
-            helper::renew_token(user, ip, auth, &database.user_manager).await
+            renew_token(user, ip, auth, &database.user_manager).await
         }
         Login::UserId(user_id) => {
             if let Err(response) = user_data.matches_group(vec![Group::Website]) {
                 return Custom(response.0, Err(RequestError::from(response).into()));
             }
             let user = database.user_manager.from_id(&user_id).await;
-            helper::renew_token(
+            renew_token(
                 user.map_err(|err| err.to_string()),
                 ip,
                 Authentication::None,
@@ -40,6 +40,39 @@ pub async fn renew(
             )
             .await
         }
+    }
+}
+
+async fn renew_token(
+    user: Result<Option<User>, String>,
+    ip: String,
+    auth: Authentication,
+    usermanager: &UserManager,
+) -> Custom<Result<String, Json<RequestError>>> {
+    match user {
+        Ok(user) if user.is_some() => {
+            let login = database::login::Login::new(ip, Server::current_time(), auth);
+
+            user.unwrap().upload_token(&login, &usermanager.users).await;
+
+            Custom(Status::Ok, Ok(login.token.0))
+        }
+        Ok(_) => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(
+                Status::NotFound,
+                "User could not be found.".to_string(),
+            ))
+            .into()),
+        ),
+        Err(_err) => Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(
+                Status::InternalServerError,
+                "A database error occured.".to_string(),
+            ))
+            .into()),
+        ),
     }
 }
 
