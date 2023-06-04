@@ -5,6 +5,7 @@ mod route_from_id;
 mod route_from_token;
 mod route_register;
 mod route_renew;
+mod route_server_authenticate;
 mod route_update;
 mod route_update_auth;
 
@@ -15,5 +16,6 @@ pub use route_from_id::*;
 pub use route_from_token::*;
 pub use route_register::*;
 pub use route_renew::*;
+pub use route_server_authenticate::*;
 pub use route_update::*;
 pub use route_update_auth::*;

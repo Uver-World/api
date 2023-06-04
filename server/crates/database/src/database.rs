@@ -1,6 +1,6 @@
 use mongodb::{error::Error, *};
 
-use crate::managers::{OrganizationManager, UserManager};
+use crate::managers::{OrganizationManager, PeersManager, UserManager};
 
 #[derive(Clone)]
 pub struct DatabaseSettings {
@@ -19,6 +19,7 @@ pub struct DatabaseSettings {
 pub struct Database {
     pub user_manager: UserManager,
     pub organization_manager: OrganizationManager,
+    pub peers_manager: PeersManager,
 }
 
 impl Database {
@@ -39,6 +40,7 @@ impl Database {
         Ok(Database {
             user_manager: UserManager::init(db.collection("users")),
             organization_manager: OrganizationManager::init(db.collection("organizations")),
+            peers_manager: PeersManager::init(db.collection("peers")),
         })
     }
 }
