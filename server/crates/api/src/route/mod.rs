@@ -30,6 +30,7 @@ impl ApiRoute {
                 user::server_authenticate,
                 user::access_server,
                 user::has_access,
+                user::server_disconnect,
             ],
             Self::Organization => openapi_get_routes_spec![
                 organization::from_id,

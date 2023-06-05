@@ -8,6 +8,7 @@ mod route_has_access;
 mod route_register;
 mod route_renew;
 mod route_server_authenticate;
+mod route_server_disconnect;
 mod route_update;
 mod route_update_auth;
 
@@ -21,5 +22,6 @@ pub use route_has_access::*;
 pub use route_register::*;
 pub use route_renew::*;
 pub use route_server_authenticate::*;
+pub use route_server_disconnect::*;
 pub use route_update::*;
 pub use route_update_auth::*;
