@@ -1,30 +1,72 @@
-use database::{group::Group, token::Token, user::User, Database};
+use database::{group::Group, peer::Peer, Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
-use crate::{model::user_token::UserData, RequestError};
+use crate::{
+    model::{server_id::ServerId, user_token::UserData},
+    RequestError,
+};
 
-/// User retrieve server informations to connect
 #[openapi(tag = "Users")]
-#[post("/access_server", data = "<token>", format = "application/json")] // <- route attribute
+#[post("/access_server", data = "<server_id>", format = "application/json")] // <- route attribute
 pub async fn access_server(
     user_data: UserData,
     database: &State<Database>,
-    token: Json<Token>,
-) -> Custom<Result<Json<User>, Json<RequestError>>> {
-    let raw_token = token.0 .0;
-    if let Err(response) = user_data.matches_group(vec![Group::Server]) {
+    server_id: Json<ServerId>,
+) -> Custom<Result<Json<Peer>, Json<RequestError>>> {
+    if let Err(response) = user_data.matches_group(vec![Group::User]) {
         return Custom(response.0, Err(RequestError::from(response).into()));
     }
-    match database.user_manager.from_token(&raw_token).await {
-        // TODO check if the server is already logged in from another location.
-        // IF so, return a conflict
-        Ok(user) if user.is_some() => Custom(Status::Ok, Ok(Json(user.unwrap()))),
+    let server_id = server_id.0;
+    match database.user_manager.from_id(&server_id.0).await {
+        Ok(user) if user.is_some() => {
+            match database
+                .organization_manager
+                .has_access_to_server(&server_id.0, &user_data.id.unwrap())
+                .await
+            {
+                Ok(true) => match database.peers_manager.from_server_id(&server_id.0).await {
+                    Ok(Some(peer)) => Custom(Status::Ok, Ok(Json(peer))),
+                    Ok(None) => Custom(
+                        Status::Ok,
+                        Err(RequestError::from(Custom(
+                            Status::NotFound,
+                            format!("The server is currently offline."),
+                        ))
+                        .into()),
+                    ),
+                    Err(_) => Custom(
+                        Status::Ok,
+                        Err(RequestError::from(Custom(
+                            Status::InternalServerError,
+                            format!("A database error occured."),
+                        ))
+                        .into()),
+                    ),
+                },
+                Ok(false) => Custom(
+                    Status::Ok,
+                    Err(RequestError::from(Custom(
+                        Status::Unauthorized,
+                        format!("You are not part of any organization of this server."),
+                    ))
+                    .into()),
+                ),
+                Err(_) => Custom(
+                    Status::Ok,
+                    Err(RequestError::from(Custom(
+                        Status::InternalServerError,
+                        format!("A database error occured."),
+                    ))
+                    .into()),
+                ),
+            }
+        }
         _ => Custom(
             Status::Ok,
             Err(RequestError::from(Custom(
                 Status::NotFound,
-                format!("Server not found with token: {raw_token}"),
+                format!("Server not found with id: {}", server_id.0),
             ))
             .into()),
         ),
@@ -34,106 +76,50 @@ pub async fn access_server(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, user::User, Database};
+    use database::{group::Group, peer::Peer, Database};
     use rocket::http::{Method, Status};
 
     use crate::{
+        model::server_id::ServerId,
         testing::{self, dispatch_request, run_test},
-        RequestError,
+        Server,
     };
 
     #[rocket::async_test]
-    async fn test_from_token() {
+    async fn test_access_server() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
+            let test_server = testing::get_user(database, Group::Server).await;
             let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
-            let request_token = request_user.get_token().unwrap();
-
-            let response = dispatch_request(
-                &client,
-                Method::Get,
-                format!("/user/token/{}", test_user.get_token().unwrap()),
-                None,
-                Some(request_token.to_string()),
-            )
-            .await;
-
-            assert_eq!(response.status(), Status::Ok);
-            let user = response.into_json::<User>().await.unwrap();
-            assert_eq!(user.unique_id, test_user.unique_id);
-            assert_eq!(user.username, test_user.username);
-        })
-        .await;
-    }
-
-    #[rocket::async_test]
-    async fn test_from_unknown_token() {
-        run_test(|client| async move {
-            let request_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website)
+            let _test_org =
+                testing::create_org(database, &test_user, vec![test_server.unique_id.clone()])
                     .await;
-            let request_token = request_user.get_token().unwrap();
-            let token = "NO_TOKEN";
+
+            let server_peer = Peer {
+                room_id: Server::generate_unique_id().to_string(),
+                creation_date: Server::current_time().to_string(),
+                signaling_hostname: "127.0.0.1".to_string(),
+                signaling_port: 3536,
+                server_unique_id: test_server.unique_id.clone(),
+            };
+
+            let _ = database
+                .peers_manager
+                .create_peer(&server_peer)
+                .await
+                .unwrap();
 
             let response = dispatch_request(
                 &client,
-                Method::Get,
-                format!("/user/token/{token}"),
-                None,
-                Some(request_token.to_string()),
+                Method::Post,
+                format!("/user/access_server"),
+                Some(serde_json::to_string(&ServerId(test_server.unique_id)).unwrap()),
+                Some(test_user.get_token().unwrap().to_string()),
             )
             .await;
 
             assert_eq!(response.status(), Status::Ok);
-            let request_error = response.into_json::<RequestError>().await.unwrap();
-            assert_eq!(request_error.code, 404);
-            assert_eq!(
-                request_error.message,
-                format!("User not found with token: {token}")
-            );
-        })
-        .await;
-    }
-
-    #[rocket::async_test]
-    async fn unauthorized_test_from_token() {
-        run_test(|client| async move {
-            let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::User).await;
-            let request_token = request_user.get_token().unwrap();
-
-            let response = dispatch_request(
-                &client,
-                Method::Get,
-                format!("/user/token/{}", test_user.get_token().unwrap()),
-                None,
-                Some(request_token.to_string()),
-            )
-            .await;
-
-            assert_eq!(response.status(), Status::Unauthorized);
-        })
-        .await;
-    }
-
-    #[rocket::async_test]
-    async fn forbidden_test_from_token() {
-        run_test(|client| async move {
-            let test_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::User).await;
-
-            let response = dispatch_request(
-                &client,
-                Method::Get,
-                format!("/user/token/{}", test_user.get_token().unwrap()),
-                None,
-                None,
-            )
-            .await;
-
-            assert_eq!(response.status(), Status::Forbidden);
+            let _ = response.into_json::<Peer>().await.unwrap();
         })
         .await;
     }

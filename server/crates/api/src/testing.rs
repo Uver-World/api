@@ -50,19 +50,17 @@ pub async fn get_user(database: &Database, group: Group) -> User {
     create_user(database, group, Authentication::None).await
 }
 
-/// Creates an user with the desired group
-/// Adds it to the database
-/// Returns it
-pub async fn get_org(database: &Database, user: &User) -> Organization {
+pub async fn create_org(database: &Database, user: &User, server_ids: Vec<String>) -> Organization {
     let timestamp = Server::current_time();
     let unique_id = Server::generate_unique_id().to_string();
 
     let organization = Organization {
         unique_id: unique_id.clone(),
         creation_date: timestamp.to_string(),
-        members_id: Vec::new(),
+        member_ids: Vec::new(),
         name: format!("name-{unique_id}"),
         owner_id: user.unique_id.clone(),
+        server_ids,
     };
 
     let _ = database
@@ -71,6 +69,10 @@ pub async fn get_org(database: &Database, user: &User) -> Organization {
         .await;
 
     organization
+}
+
+pub async fn get_org(database: &Database, user: &User) -> Organization {
+    create_org(database, user, Vec::new()).await
 }
 
 pub async fn run_test<F, Fut>(lambda_func: F)

@@ -14,11 +14,9 @@ pub async fn server_authenticate(
     if let Err(response) = user_data.matches_group(vec![Group::Server]) {
         return Custom(response.0, Err(RequestError::from(response).into()));
     }
-    let server_id = user_data.id.unwrap();
+    let server_unique_id = user_data.id.unwrap();
 
-    match database.peers_manager.peers_exist(&server_id).await {
-        // TODO check if the server is already logged in from another location.
-        // IF so, return a conflict
+    match database.peers_manager.peers_exist(&server_unique_id).await {
         Ok(exists) if exists => Custom(
             Status::Ok,
             Err(RequestError::from(Custom(
@@ -33,7 +31,7 @@ pub async fn server_authenticate(
                 creation_date: Server::current_time().to_string(),
                 signaling_hostname: "127.0.0.1".to_string(),
                 signaling_port: 3536,
-                server_unique_id: server_id,
+                server_unique_id: server_unique_id,
             };
             match database.peers_manager.create_peer(&server_peer).await {
                 Ok(_) => Custom(Status::Ok, Ok(Json(server_peer))),

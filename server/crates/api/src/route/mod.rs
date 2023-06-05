@@ -28,12 +28,16 @@ impl ApiRoute {
                 user::delete_from_id,
                 user::delete_from_token,
                 user::server_authenticate,
+                user::access_server,
+                user::has_access,
             ],
             Self::Organization => openapi_get_routes_spec![
                 organization::from_id,
                 organization::delete_from_id,
                 organization::create,
                 organization::update,
+                organization::add_server,
+                organization::remove_server,
             ],
         }
     }

@@ -1,19 +1,23 @@
+mod route_access_server;
 mod route_delete_from_id;
 mod route_delete_from_token;
 mod route_email_exists;
 mod route_from_id;
 mod route_from_token;
+mod route_has_access;
 mod route_register;
 mod route_renew;
 mod route_server_authenticate;
 mod route_update;
 mod route_update_auth;
 
+pub use route_access_server::*;
 pub use route_delete_from_id::*;
 pub use route_delete_from_token::*;
 pub use route_email_exists::*;
 pub use route_from_id::*;
 pub use route_from_token::*;
+pub use route_has_access::*;
 pub use route_register::*;
 pub use route_renew::*;
 pub use route_server_authenticate::*;
