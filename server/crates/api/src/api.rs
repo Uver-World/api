@@ -1,3 +1,4 @@
+use database::user::User;
 use rocket::{fairing::AdHoc, *};
 
 use database::*;
@@ -8,10 +9,24 @@ use rocket_okapi::settings::UrlObject;
 use crate::settings::ApiSettings;
 use crate::{cors::CORS, route::ApiRoute, Server};
 
+async fn create_default_website_user(database: &Database) {
+    let website_missing_response = database.user_manager.website_missing();
+    if website_missing_response.await.unwrap() {
+        println!("NO USER WITH THE WEBSITE GROUP EXISTS");
+        let unique_id: u64 = Server::generate_unique_id();
+        let timestamp = Server::current_time();
+        let _ = database.user_manager.create_user(&User::default_website_user(unique_id.to_string(), timestamp)).await;
+        println!("A NEW USER WITH THE WEBSITE GROUP HAS BEEN CREATED, PLEASE CHECK DATABASE");
+    }
+}
+
 fn init_db(settings: DatabaseSettings) -> AdHoc {
     AdHoc::on_ignite("Connecting to MongoDB", |rocket| async {
         match Database::init(&settings).await {
-            Ok(database) => rocket.manage(settings).manage(database),
+            Ok(database) => {
+                create_default_website_user(&database).await;
+                rocket.manage(settings).manage(database)
+            },
             Err(error) => {
                 panic!("Cannot connect to MongoDB instance:: {error:?}");
             }

@@ -7,7 +7,7 @@ use mongodb::{
     Collection,
 };
 
-use crate::{authentication::Authentication, models::user::User, user::UserUpdate};
+use crate::{authentication::Authentication, models::user::User, user::UserUpdate, group::Group};
 
 pub struct UserManager {
     pub users: Collection<User>,
@@ -101,5 +101,11 @@ impl UserManager {
             .collect();
         let update = doc! {"$set": to_bson(&fields).unwrap()};
         self.users.update_one(filter, update, None).await
+    }
+
+    pub async fn website_missing(&self) -> Result<bool, Error> {
+        let filter = doc! {"group": format!("{:?}", Group::Website)};
+        let documents = self.users.count_documents(filter, None).await?;
+        Ok(documents == 0)
     }
 }
