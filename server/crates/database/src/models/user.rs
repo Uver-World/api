@@ -1,3 +1,5 @@
+use core::time;
+
 use mongodb::{
     bson::{doc, to_bson, Bson},
     Collection,
@@ -39,7 +41,7 @@ impl User {
         Some(&self.logins.last()?.token.0)
     }
 
-    pub async fn upload_token(&self, login: &Login, users: &Collection<User>) {
+    pub async fn upload_token(&self, login: &Login, users: &Collection<Self>) {
         let _ = users
             .update_one(
                 doc! {"unique_id": &self.unique_id },
@@ -47,5 +49,16 @@ impl User {
                 None,
             )
             .await;
+    }
+
+    pub fn default_website_user(unique_id: String, timestamp: u128) -> Self {
+        Self {
+            authentication: Authentication::None,
+            unique_id,
+            creation_date: timestamp.to_string(),
+            logins: vec![Login::new("127.0.0.1".to_string(), timestamp, Authentication::None)],
+            username: "ADMIN".to_string(),
+            group: Group::Website
+        }
     }
 }
