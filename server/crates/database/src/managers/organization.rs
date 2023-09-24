@@ -54,6 +54,80 @@ impl OrganizationManager {
         ))
     }
 
+    pub async fn add_to_server_ids(
+        &self,
+        uuid: &str,
+        server_id: &str,
+    ) -> Result<UpdateResult, String> {
+        let filter = doc! { "unique_id": uuid };
+        let update = doc! { "$addToSet": { "server_ids": server_id } };
+
+        self.organizations
+            .update_one(filter, update, None)
+            .await
+            .map_err(|err| err.to_string())
+    }
+
+    pub async fn has_access_to_server(
+        &self,
+        server_unique_id: &str,
+        user_unique_id: &str,
+    ) -> Result<bool, String> {
+        let filter = doc! {
+            { "server_ids" }: { "$in": [server_unique_id] },
+            "$or": [
+                { "member_ids": { "$in": [user_unique_id] } },
+                { "owner_id": user_unique_id }
+            ]
+        };
+        match self
+            .organizations
+            .find_one(filter, None)
+            .await
+            .map_err(|err| err.to_string())?
+        {
+            Some(_) => Ok(true),
+            None => Ok(false),
+        }
+    }
+
+    pub async fn is_in_organization(
+        &self,
+        uuid: &str,
+        user_unique_id: &str,
+    ) -> Result<bool, String> {
+        let filter = doc! {
+            "unique_id": uuid,
+            "$or": [
+                { "member_ids": { "$in": [user_unique_id] } },
+                { "owner_id": user_unique_id }
+            ]
+        };
+        match self
+            .organizations
+            .find_one(filter, None)
+            .await
+            .map_err(|err| err.to_string())?
+        {
+            Some(_) => Ok(true),
+            None => Ok(false),
+        }
+    }
+
+    pub async fn remove_from_server_ids(
+        &self,
+        uuid: &str,
+        server_id: &str,
+    ) -> Result<UpdateResult, String> {
+        let filter = doc! { "unique_id": uuid };
+        let update = doc! { "$pull": { "server_ids": server_id } };
+
+        self.organizations
+            .update_one(filter, update, None)
+            .await
+            .map_err(|err| err.to_string())
+    }
+
     pub async fn update_organization(
         &self,
         uuid: &str,

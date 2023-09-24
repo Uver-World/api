@@ -42,8 +42,9 @@ pub async fn create(
         unique_id: Server::generate_unique_id().to_string(),
         creation_date: Server::current_time().to_string(),
         name: raw_organization.name,
-        members_id: Vec::new(),
+        member_ids: Vec::new(),
         owner_id: raw_organization.owner_id,
+        server_ids: Vec::new(),
     };
 
     match database
