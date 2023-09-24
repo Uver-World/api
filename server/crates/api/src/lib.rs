@@ -1,6 +1,6 @@
+#![feature(coverage_attribute)]
 #![feature(let_chains)]
 #![feature(async_closure)]
-#![feature(no_coverage)]
 
 mod api;
 mod server;
