@@ -1,0 +1,8 @@
+- name: Update the API on the server
+  hosts: uverworld-website
+  remote_user: root
+
+- import_playbook: repository_setup.yml
+- import_playbook: compile_api.yml
+- import_playbook: run_database.yml
+- import_playbook: run_api.yml

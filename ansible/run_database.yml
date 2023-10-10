@@ -1,0 +1,34 @@
+- name: Running the database
+  hosts: uverworld-website
+  remote_user: root
+  become: yes  # Required for installing packages and managing Docker.
+
+  tasks:
+     - name: Check if Docker is installed
+       command: docker --version
+       register: docker_installed
+       ignore_errors: yes
+
+     - name: Install Docker using get.docker.com script
+       shell: |
+         curl -fsSL https://get.docker.com -o get-docker.sh
+         sudo sh get-docker.sh
+       args:
+         creates: /usr/bin/docker
+       when: docker_installed is failed
+
+     - name: Check if Docker Compose is installed
+       command: docker-compose --version
+       register: docker_compose_installed
+       ignore_errors: yes
+
+     - name: Install Docker Compose
+       apt:
+         name: docker-compose
+         state: present
+       when: docker_compose_installed is failed
+
+     - name: Run docker-compose for mongo
+       command: docker-compose up -d mongo
+       args:
+         chdir: /home/uverworld-api/api

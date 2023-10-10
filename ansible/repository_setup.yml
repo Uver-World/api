@@ -1,0 +1,56 @@
+- name: Repository set up
+  hosts: uverworld-website
+  remote_user: root
+
+  tasks:
+    - name: Ensure git is installed
+      ansible.builtin.package:
+        name: git
+        state: present
+      become: yes
+
+    - name: Copy SSH key from controller to target
+      ansible.builtin.copy:
+        src: uverworld_api
+        dest: /tmp/uverworld_api
+        mode: '0600'
+
+    - name: Check if ~/api is a git repo
+      ansible.builtin.stat:
+        path: ~/api/.git
+      register: git_repo_check
+
+    - name: Update the repository if ~/api is already a git repo
+      ansible.builtin.git:
+        repo: 'git@github.com:Uver-World/api.git'
+        dest: ~/api
+        accept_hostkey: yes
+        key_file: /tmp/uverworld_api
+        update: yes
+      when: git_repo_check.stat.exists
+
+    - name: Remove the directory if ~/api is not a git repo
+      ansible.builtin.file:
+        path: ~/api
+        state: absent
+      when: not git_repo_check.stat.exists
+
+    - name: Clone the repository
+      ansible.builtin.git:
+        repo: 'git@github.com:Uver-World/api.git'
+        dest: ~/api
+        accept_hostkey: yes
+        key_file: /tmp/uverworld_api
+        force: yes
+      when: not git_repo_check.stat.exists
+
+    - name: Remove SSH key from target
+      ansible.builtin.file:
+        path: /tmp/uverworld_api
+        state: absent
+
+    - name: Copy .env file to remote host
+      ansible.builtin.copy:
+        src: ../.env
+        dest: ~/api/.env
+        mode: '0644'

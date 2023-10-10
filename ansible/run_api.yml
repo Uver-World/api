@@ -1,0 +1,10 @@
+- name: Running the API
+  hosts: uverworld-website
+  remote_user: root
+
+  tasks:
+    - name: Run the binary
+      ansible.builtin.shell:
+        cmd: nohup ./server/target/release/server -e .env > /dev/null 2>&1 &
+        executable: /bin/bash
+        chdir: "~/api"
