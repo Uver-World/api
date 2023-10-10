@@ -91,7 +91,7 @@ mod tests {
             .await;
 
             assert_eq!(response.status(), Status::Ok);
-            let response_id = response.into_string().await.unwrap();
+            let response_id = response.into_json().await.unwrap();
             let created_org = database
                 .organization_manager
                 .from_id(&response_id)
