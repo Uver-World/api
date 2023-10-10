@@ -16,7 +16,7 @@ pub async fn create(
     user_data: UserData,
     database: &State<Database>,
     organization: Json<OrganizationInit>,
-) -> Custom<Result<String, Json<RequestError>>> {
+) -> Custom<Result<Json<String>, Json<RequestError>>> {
     if let Err(response) = user_data.matches_group(vec![Group::Website]) {
         return Custom(response.0, Err(RequestError::from(response).into()));
     }
@@ -52,7 +52,7 @@ pub async fn create(
         .create_organization(&organization)
         .await
     {
-        Ok(_) => Custom(Status::Ok, Ok(organization.unique_id)),
+        Ok(_) => Custom(Status::Ok, Ok(Json(organization.unique_id))),
         Err(error) => Custom(
             Status::Ok,
             Err(RequestError::from(Custom(Status::InternalServerError, error.to_string())).into()),
