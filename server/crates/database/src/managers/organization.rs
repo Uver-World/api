@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use futures::StreamExt;
 use mongodb::{
     bson::{doc, to_bson, Bson},
     error::Error,
@@ -140,5 +141,26 @@ impl OrganizationManager {
             .collect();
         let update = doc! {"$set": to_bson(&fields).unwrap()};
         self.organizations.update_one(filter, update, None).await
+    }
+
+    // Find every organizations where owner_id = user_id or member_ids contains user_id
+    pub async fn get_organizations_from_user(
+        &self,
+        user_id: &str,
+    ) -> Result<Vec<Organization>, Error> {
+        let filter = doc! {
+            "$or": [
+                { "member_ids": { "$in": [user_id] } },
+                { "owner_id": user_id }
+            ]
+        };
+        let mut cursor: mongodb::Cursor<Organization> = self.organizations.find(filter, None).await?;
+        let mut organizations: Vec<Organization> = Vec::new();
+
+        while let Some(organization) = cursor.next().await {
+            organizations.push(organization?);
+        }
+
+        Ok(organizations)
     }
 }
