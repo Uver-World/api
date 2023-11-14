@@ -3,7 +3,7 @@ use rocket::{http::Status, get, response::status::Custom, serde::json::Json, Sta
 use rocket_okapi::openapi;
 
 use crate::{
-    model::{user_token::UserData},
+    model::user_token::UserData,
     RequestError,
 };
 

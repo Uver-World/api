@@ -163,4 +163,13 @@ impl OrganizationManager {
 
         Ok(organizations)
     }
+
+    pub async fn add_member(&self, organization_id: &str, member_id: &str) -> Result<UpdateResult, Error> {
+        let filter = doc! { "unique_id": organization_id };
+        let update = doc! { "$addToSet": { "member_ids": member_id } };
+
+        self.organizations
+            .update_one(filter, update, None)
+            .await
+    }
 }

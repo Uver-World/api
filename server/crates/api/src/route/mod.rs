@@ -34,6 +34,7 @@ impl ApiRoute {
                 user::server_disconnect,
             ],
             Self::Organization => openapi_get_routes_spec![
+                organization::add_member,
                 organization::from_id,
                 organization::delete_from_id,
                 organization::create,
