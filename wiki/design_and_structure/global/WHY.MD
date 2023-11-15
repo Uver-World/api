@@ -1,3 +1,4 @@
+[return to list of guides](../../README.MD)
 # Why a REST API?
 
 ### The project contains 3 main components
@@ -21,3 +22,5 @@ graph TD
     Website -->|obtain user info, list of organizations| API
     API -->|retrieve required information| Database
 ```
+
+[return to list of guides](../../README.MD)

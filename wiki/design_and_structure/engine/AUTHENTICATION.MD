@@ -1,3 +1,6 @@
+[return to list of guides](../../README.MD)
+# Engine authentication with API
+
 ```mermaid
 graph TD
 subgraph Engine Side
@@ -36,3 +39,5 @@ end
     Database -->|store new peer| API_Sends_New_Peer
     API_Sends_New_Peer -->|send new peer| Engine
 ```
+
+[return to list of guides](../../README.MD)

@@ -1,3 +1,6 @@
+[return to list of guides](../../README.MD)
+# Client authentication with API
+
 ```mermaid
 graph TD
 subgraph Client Side
@@ -38,3 +41,5 @@ end
     Database_Check_Peer -->|Peer exists| API_Returns_Peer
     API_Returns_Peer -->|Return Peer| Client
 ```
+
+[return to list of guides](../../README.MD)
