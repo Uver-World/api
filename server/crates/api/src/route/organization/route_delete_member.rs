@@ -83,3 +83,62 @@ fn error_response(status: Status, message: &str) -> Custom<Result<Json<bool>, Js
         Err(RequestError::from(Custom(status, message.into())).into()),
     )
 }
+
+#[cfg(test)]
+mod tests {
+
+    use database::{group::Group, Database};
+    use rocket::http::{Method, Status};
+    use serde_json::json;
+
+    use crate::testing::{self, dispatch_request, run_test};
+
+    #[rocket::async_test]
+    async fn test_unknow_organization() {
+        run_test(|client| async move {
+            let database = client.rocket().state::<Database>().unwrap();
+            let test_user = testing::get_user(database, Group::Website).await;
+            let request_user = testing::get_user(database, Group::Website).await;
+            let request_token = request_user.get_token().unwrap();
+
+            let response = dispatch_request(
+                &client,
+                Method::Delete,
+                format!("/organization/id/{}/members", "unknown"),
+                Some(serde_json::to_string(&json!({
+                    "member_id": test_user.unique_id
+                })).unwrap()),
+                Some(request_token.to_string()),
+            )
+            .await;
+
+            assert_eq!(response.status(), Status::NotFound);
+        })
+        .await;
+    }
+
+    #[rocket::async_test]
+    async fn test_unknow_member() {
+        run_test(|client| async move {
+            let database = client.rocket().state::<Database>().unwrap();
+            let test_user = testing::get_user(database, Group::Website).await;
+            let organization = testing::get_org(database, &test_user).await;
+            let request_user = testing::get_user(database, Group::Website).await;
+            let request_token = request_user.get_token().unwrap();
+
+            let response = dispatch_request(
+                &client,
+                Method::Delete,
+                format!("/organization/id/{}/members", organization.unique_id),
+                Some(serde_json::to_string(&json!({
+                    "member_id": "unknow"
+                })).unwrap()),
+                Some(request_token.to_string()),
+            )
+            .await;
+
+            assert_eq!(response.status(), Status::NotFound);
+        })
+        .await;
+    }
+}
