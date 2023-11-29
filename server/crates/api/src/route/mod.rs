@@ -42,6 +42,7 @@ impl ApiRoute {
                 organization::update,
                 organization::add_server,
                 organization::remove_server,
+                organization::remove_member,
             ],
         }
     }
