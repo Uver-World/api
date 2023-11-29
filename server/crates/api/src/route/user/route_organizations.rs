@@ -33,3 +33,35 @@ pub async fn get_organizations(
         ),
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use database::{group::Group, Database, organization::Organization};
+    use rocket::http::{Method, Status};
+
+    use crate::testing::{self, dispatch_request, run_test};
+
+    #[rocket::async_test]
+    async fn test_get_organizations() {
+        run_test(|client| async move {
+            let database = client.rocket().state::<Database>().unwrap();
+            let test_user = testing::get_user(database, Group::User).await;
+            let request_user = testing::get_user(database, Group::User).await;
+            let request_token = request_user.get_token().unwrap();
+
+            let response = dispatch_request(
+                &client,
+                Method::Get,
+                format!("/user/id/{}/organizations", test_user.unique_id),
+                None,
+                Some(request_token.to_string()),
+            )
+            .await;
+
+            assert_eq!(response.status(), Status::Ok);
+            let organizations = response.into_json::<Vec<Organization>>().await.unwrap();
+            assert_eq!(organizations.len(), 0);
+        });
+    }
+}
