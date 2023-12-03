@@ -1,5 +1,5 @@
 use database::{group::Group, Database, organization::Organization};
-use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
+use rocket::{http::Status, delete, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
 use crate::{
@@ -7,16 +7,16 @@ use crate::{
     RequestError,
 };
 
-/// Register a new member on the organization
+/// Delete a member from the organization
 ///
 /// Requires 'Website' group
 #[openapi(tag = "Organizations")]
-#[post(
+#[delete(
     "/<id>/members",
     data = "<body>",
     format = "application/json"
 )]
-pub async fn add_member(
+pub async fn remove_member(
     user_data: UserData,
     database: &State<Database>,
     id: String,
@@ -34,7 +34,7 @@ pub async fn add_member(
     }
 }
 
-// check_member checks if the member exists, if is not already a member or the owner and adds it to the organization
+// check_member checks if the member is present in the organization and removes it
 async fn check_member(
     database: &State<Database>,
     organization: Organization,
@@ -45,15 +45,15 @@ async fn check_member(
             if organization.owner_id == member.unique_id {
                 error_response(
                     Status::Conflict,
-                    "The user is already the owner of the organization.",
+                    "The user is the owner of the organization.",
                 )
-            } else if organization.member_ids.contains(&member.unique_id) {
+            } else if !organization.member_ids.contains(&member.unique_id) {
                 error_response(
                     Status::Conflict,
-                    "The user is already a member of the organization.",
+                    "The user is not a member of the organization.",
                 )
             } else {
-                add_member_to_organization(database, organization.unique_id, member_id).await
+                remove_member_from_organization(database, organization.unique_id, member_id).await
             }
         }
         Ok(None) => error_response(Status::NotFound, "Member was not found."),
@@ -61,15 +61,15 @@ async fn check_member(
     }
 }
 
-// add_member_to_organization adds the member to the organization
-async fn add_member_to_organization(
+// remove_member_from_organization removes the member from the organization
+async fn remove_member_from_organization(
     database: &State<Database>,
     organization_id: String,
     member_id: String,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
     match database
         .organization_manager
-        .add_member(&organization_id, &member_id)
+        .remove_from_member_ids(&organization_id, &member_id)
         .await
     {
         Ok(_) => Custom(Status::Ok, Ok(Json(true))),
@@ -103,8 +103,8 @@ mod tests {
 
             let response = dispatch_request(
                 &client,
-                Method::Post,
-                format!("/organization/id/{}/members", "unknow"),
+                Method::Delete,
+                format!("/organization/id/{}/members", "unknown"),
                 Some(serde_json::to_string(&json!({
                     "member_id": test_user.unique_id
                 })).unwrap()),
@@ -128,7 +128,7 @@ mod tests {
 
             let response = dispatch_request(
                 &client,
-                Method::Post,
+                Method::Delete,
                 format!("/organization/id/{}/members", organization.unique_id),
                 Some(serde_json::to_string(&json!({
                     "member_id": "unknow"
