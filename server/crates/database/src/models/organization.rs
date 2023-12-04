@@ -28,4 +28,5 @@ pub struct Organization {
     pub member_ids: Vec<String>,
     pub owner_id: String,
     pub server_ids: Vec<String>,
+    pub projects_ids: Vec<String>,
 }

@@ -38,6 +38,7 @@ impl ApiRoute {
                 organization::from_id,
                 organization::delete_from_id,
                 organization::create,
+                organization::create_project,
                 organization::update,
                 organization::add_server,
                 organization::remove_server,

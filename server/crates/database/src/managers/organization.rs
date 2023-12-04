@@ -185,4 +185,17 @@ impl OrganizationManager {
             .update_one(filter, update, None)
             .await
     }
+
+    pub async fn add_to_projects_ids(
+        &self,
+        organization_id: &str,
+        project_id: &str,
+    ) -> Result<UpdateResult, Error> {
+        let filter = doc! { "unique_id": organization_id };
+        let update = doc! { "$addToSet": { "projects_ids": project_id } };
+
+        self.organizations
+            .update_one(filter, update, None)
+            .await
+    }
 }
