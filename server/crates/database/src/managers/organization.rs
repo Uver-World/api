@@ -198,4 +198,17 @@ impl OrganizationManager {
             .update_one(filter, update, None)
             .await
     }
+
+    pub async fn remove_from_projects_ids(
+        &self,
+        organization_id: &str,
+        project_id: &str,
+    ) -> Result<UpdateResult, Error> {
+        let filter = doc! { "unique_id": organization_id };
+        let update = doc! { "$pull": { "projects_ids": project_id } };
+
+        self.organizations
+            .update_one(filter, update, None)
+            .await
+    }
 }
