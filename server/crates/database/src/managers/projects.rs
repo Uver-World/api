@@ -1,8 +1,10 @@
 pub use crate::models::project::Project;
 
+use futures::StreamExt;
 use mongodb::{
     error::Error,
-    results::{InsertOneResult},
+    results::InsertOneResult,
+    bson::doc,
     Collection,
 };
 
@@ -21,6 +23,21 @@ impl ProjectManager {
     ) -> Result<InsertOneResult, Error> {
         let target = self.projects.insert_one(project, None).await?;
         Ok(target)
+    }
+
+    pub async fn from_organization_id(
+        &self,
+        organization_id: &str,
+    ) -> Result<Vec<Project>, Error> {
+        let filter = doc! {"organization_id": organization_id};
+        let mut cursor: mongodb::Cursor<Project>  = self.projects.find(filter, None).await?;
+        let mut projects = Vec::new();
+        
+        while let Some(project) = cursor.next().await {
+            projects.push(project?);
+        }
+
+        Ok(projects)
     }
 }
 
