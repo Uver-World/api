@@ -1,24 +1,19 @@
 use database::{group::Group, Database, project::Project};
-use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
+use rocket::{http::Status, get, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
+use crate::RequestError;
+use crate::model::user_token::UserData;
 
-use crate::{
-    model::{project_init::ProjectInit, user_token::UserData},
-    RequestError, Server,
-};
-
-/// Register a new project in the organization
-///
+/// Get all the projects of a specific organization.
+/// 
 /// Requires 'Website' group
 #[openapi(tag = "Organizations")]
-#[post("/<id>/projects", data = "<project>", format = "application/json")] // <- route attribute
-// Add new project to organization
-pub async fn create_project(
+#[get("/<id>/projects", format = "application/json")]
+pub async fn get_projects_from_organization(
     user_data: UserData,
     database: &State<Database>,
-    project: Json<ProjectInit>,
     id: String,
-) -> Custom<Result<Json<String>, Json<RequestError>>> {
+) -> Custom<Result<Json<Vec<Project>>, Json<RequestError>>> {
     if let Err(response) = user_data.matches_group(vec![Group::Website]) {
         return Custom(response.0, Err(RequestError::from(response).into()));
     }
@@ -47,15 +42,8 @@ pub async fn create_project(
         }
     };
 
-    let project = Project {
-        unique_id: Server::generate_unique_id().to_string(),
-        name: project.0.name,
-        organization_id: organization.unique_id.clone(),
-        member_ids: Vec::new(),
-    };
-
-    match database.project_manager.create(&project).await {
-        Ok(_) => (),
+    let projects = match database.project_manager.from_organization_id(&organization.unique_id).await {
+        Ok(projects) => projects,
         Err(err) => {
             return Custom(
                 Status::InternalServerError,
@@ -68,51 +56,27 @@ pub async fn create_project(
         }
     };
 
-    match database
-        .organization_manager
-        .add_to_projects_ids(&organization.unique_id, &project.unique_id)
-        .await
-    {
-        Ok(_) => (),
-        Err(err) => {
-            return Custom(
-                Status::InternalServerError,
-                Err(RequestError::from(Custom(
-                    Status::InternalServerError,
-                    err.to_string(),
-                ))
-                .into()),
-            )
-        }
-    };
-
-    Custom(Status::Ok, Ok(Json(project.unique_id)))
+    Custom(Status::Ok, Ok(Json(projects)))
 }
 
 #[cfg(test)]
 mod tests {
-    
+
     use database::{group::Group, Database};
     use rocket::http::{Method, Status};
     use crate::testing::{self, dispatch_request, run_test};
-    use crate::model::project_init::ProjectInit;
 
-    // Test to create a project with a non existing organization
     #[rocket::async_test]
-    async fn test_create_project_non_existing_organization() {
-        run_test(|client| async move {
+    async fn get_projects_from_organization_not_found() {
+        run_test(|client| async {
             let database = client.rocket().state::<Database>().unwrap();
             let test_user = testing::get_user(database, Group::Website).await;
 
-            let project = ProjectInit {
-                name: "test_project".to_string(),
-            };
-
             let response = dispatch_request(
                 &client,
-                Method::Post,
-                format!("/organisations/{}/projects", "123456789"),
-                Some(serde_json::to_string(&project).unwrap()),
+                Method::Get,
+                "/organizations/123/projects".to_string(),
+                None,
                 Some(test_user.get_token().unwrap().to_string()),
             )
             .await;
@@ -121,6 +85,4 @@ mod tests {
         })
         .await;
     }
-
-
 }
