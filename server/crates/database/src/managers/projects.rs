@@ -39,5 +39,19 @@ impl ProjectManager {
 
         Ok(projects)
     }
+
+    pub async fn from_id(
+        &self,
+        id: &str,
+    ) -> Result<Option<Project>, Error> {
+        Ok(self.projects.find_one(doc! {"unique_id": id}, None).await?)
+    }
+
+    pub async fn delete_from_id(
+        &self,
+        id: &str
+    ) -> Result<Option<Project>, Error> {
+        Ok(self.projects.find_one_and_delete(doc! {"unique_id": id}, None).await?)
+    }
 }
 
