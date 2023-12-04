@@ -47,6 +47,7 @@ impl ApiRoute {
                 organization::get_projects_from_organization,
                 organization::delete_project,
                 organization::project_from_id,
+                organization::update_project,
             ],
         }
     }

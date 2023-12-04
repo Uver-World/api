@@ -1,10 +1,14 @@
 pub use crate::models::project::Project;
+pub use crate::models::project::ProjectUpdateData;
+pub use crate::models::project::ProjectUpdate;
+use std::collections::HashMap;
+
 
 use futures::StreamExt;
 use mongodb::{
     error::Error,
     results::InsertOneResult,
-    bson::doc,
+    bson::{doc, to_bson, Bson},
     Collection,
 };
 
@@ -52,6 +56,25 @@ impl ProjectManager {
         id: &str
     ) -> Result<Option<Project>, Error> {
         Ok(self.projects.find_one_and_delete(doc! {"unique_id": id}, None).await?)
+    }
+
+    pub async fn update_project(
+        &self,
+        id: &str,
+        project_update: Vec<ProjectUpdate>,
+    ) -> Result<bool, Error> {
+        let filter = doc! {"unique_id": id.to_string()};
+        let fields: HashMap<String, Bson> = project_update
+            .iter()
+            .filter_map(|update| update.convert())
+            .collect();
+        let update = doc! {"$set": to_bson(&fields).unwrap()};
+
+        match self.projects.update_one(filter, update, None).await {
+            Ok(result) if result.matched_count > 0 => Ok(true),
+            Ok(_) => Ok(false),
+            Err(err) => Err(err),
+        }
     }
 }
 
