@@ -84,3 +84,69 @@ pub async fn update_project(
     }
 
 }
+
+#[cfg(test)]
+mod tests {
+
+    use database::{
+        group::Group,
+        project::ProjectUpdateData,
+        Database,
+    };
+    use rocket::http::{Method, Status};
+
+    use crate::testing::{self, dispatch_request, run_test};
+
+    #[rocket::async_test]
+    async fn test_unknow_organization() {
+        run_test(|client| async move {
+            let database = client.rocket().state::<Database>().unwrap();
+            let test_user = testing::get_user(database, Group::User).await;
+            let request_user = testing::get_user(database, Group::Website).await;
+            let request_token = request_user.get_token().unwrap();
+            let updates = ProjectUpdateData {
+                project_id: "cdcdgr".to_string(),
+                project_update: vec![],
+            };
+
+            let response = dispatch_request(
+                &client,
+                Method::Patch,
+                format!("/organization/{}/projects", test_user.unique_id),
+                Some(serde_json::to_string(&updates).unwrap()),
+                Some(request_token.to_string()),
+            )
+            .await;
+
+            assert_eq!(response.status(), Status::NotFound);
+        })
+        .await;
+    }
+
+    #[rocket::async_test]
+    async fn test_unknow_project() {
+        run_test(|client| async move {
+            let database = client.rocket().state::<Database>().unwrap();
+            let test_user = testing::get_user(database, Group::User).await;
+            let request_user = testing::get_user(database, Group::Website).await;
+            let request_token = request_user.get_token().unwrap();
+            let test_org = testing::get_org(database, &test_user).await;
+            let updates = ProjectUpdateData {
+                project_id: "cdcdgr".to_string(),
+                project_update: vec![],
+            };
+
+            let response = dispatch_request(
+                &client,
+                Method::Patch,
+                format!("/organization/{}/projects", test_org.unique_id),
+                Some(serde_json::to_string(&updates).unwrap()),
+                Some(request_token.to_string()),
+            )
+            .await;
+
+            assert_eq!(response.status(), Status::NotFound);
+        })
+        .await;
+    }
+}
