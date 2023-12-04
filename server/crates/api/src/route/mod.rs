@@ -46,6 +46,7 @@ impl ApiRoute {
                 organization::remove_member,
                 organization::get_projects_from_organization,
                 organization::delete_project,
+                organization::project_from_id,
             ],
         }
     }
