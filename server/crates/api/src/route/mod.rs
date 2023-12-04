@@ -38,10 +38,15 @@ impl ApiRoute {
                 organization::from_id,
                 organization::delete_from_id,
                 organization::create,
+                organization::create_project,
                 organization::update,
                 organization::add_server,
                 organization::remove_server,
                 organization::remove_member,
+                organization::get_projects_from_organization,
+                organization::delete_project,
+                organization::project_from_id,
+                organization::update_project,
             ],
         }
     }

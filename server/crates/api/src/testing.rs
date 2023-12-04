@@ -61,6 +61,7 @@ pub async fn create_org(database: &Database, user: &User, server_ids: Vec<String
         name: format!("name-{unique_id}"),
         owner_id: user.unique_id.clone(),
         server_ids,
+        projects_ids: Vec::new(),
     };
 
     let _ = database
