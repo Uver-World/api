@@ -9,6 +9,7 @@ mod route_update;
 mod route_delete_member;
 mod route_get_projects_from_organization;
 mod route_delete_project;
+mod route_project_from_id;
 
 pub use route_add_member::*;
 pub use route_add_server::*;
@@ -21,3 +22,4 @@ pub use route_update::*;
 pub use route_delete_member::*;
 pub use route_get_projects_from_organization::*;
 pub use route_delete_project::*;
+pub use route_project_from_id::*;
