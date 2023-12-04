@@ -45,6 +45,7 @@ pub async fn create(
         member_ids: Vec::new(),
         owner_id: raw_organization.owner_id,
         server_ids: Vec::new(),
+        projects_ids: Vec::new(),
     };
 
     match database
