@@ -28,7 +28,6 @@ async fn create_default_website_user(database: &Database) {
 fn init_telemetry(settings: TelemetrySettings) -> AdHoc {
         AdHoc::on_ignite("Launching telemetry", |rocket| async {
            telemetry::start_telemetry(settings);
-            api_telemetry::start();
 
             rocket.attach(TelemetryFairing)
         })

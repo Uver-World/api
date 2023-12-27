@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use mongodb::{error::Error, *};
 
 use crate::managers::{OrganizationManager, PeersManager, UserManager};
@@ -16,10 +18,11 @@ pub struct DatabaseSettings {
     pub database: String,
 }
 
+#[derive(Clone)]
 pub struct Database {
-    pub user_manager: UserManager,
-    pub organization_manager: OrganizationManager,
-    pub peers_manager: PeersManager,
+    pub user_manager: Arc<UserManager>,
+    pub organization_manager: Arc<OrganizationManager>,
+    pub peers_manager: Arc<PeersManager>,
 }
 
 impl Database {
@@ -38,9 +41,9 @@ impl Database {
             db.create_collection("users", None).await?;
         }
         Ok(Database {
-            user_manager: UserManager::init(db.collection("users")),
-            organization_manager: OrganizationManager::init(db.collection("organizations")),
-            peers_manager: PeersManager::init(db.collection("peers")),
+            user_manager: Arc::new(UserManager::init(db.collection("users"))),
+            organization_manager: Arc::new(OrganizationManager::init(db.collection("organizations"))),
+            peers_manager: Arc::new(PeersManager::init(db.collection("peers"))),
         })
     }
 }

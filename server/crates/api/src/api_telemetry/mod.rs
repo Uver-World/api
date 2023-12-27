@@ -1,19 +1,45 @@
 mod system_usage;
 mod fairing;
 
+use database::Database;
+use rocket::{State, tokio::runtime::Runtime};
 use system_usage::*;
 use std::thread;
 use opentelemetry::global;
 
 pub use fairing::*;
 
-pub fn start() {
+pub fn start(database: Database) {
     thread::spawn(move || {
-        loop {
-            cpu_telemetry();
-            ram_telemetry();
-        }    
+        let rt = Runtime::new().unwrap();
+        
+        rt.block_on(async {
+            loop {
+                cpu_telemetry();
+                ram_telemetry();
+                user_telemetry(&database).await;
+                peer_telemetry(&database).await;
+            }
+        });
     });
+}
+
+async fn user_telemetry(database: &Database) {
+    let number_of_users = database.user_manager.users.count_documents(None, None).await.unwrap();
+    let meter = global::meter("api");
+    let cpu_gauge = meter.u64_observable_gauge("users")
+        .with_description("Number of users")
+        .init();
+    cpu_gauge.observe(number_of_users, [].as_ref());
+}
+
+async fn peer_telemetry(database: &Database) {
+    let number_of_peers = database.peers_manager.peers.count_documents(None, None).await.unwrap();
+    let meter = global::meter("api");
+    let cpu_gauge = meter.u64_observable_gauge("peers")
+        .with_description("Number of peers")
+        .init();
+    cpu_gauge.observe(number_of_peers, [].as_ref());
 }
 
 fn cpu_telemetry() {
