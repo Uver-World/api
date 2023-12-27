@@ -10,8 +10,8 @@ members = ["crates/*"]
 
 [dependencies]
 api = { path = "crates/api" }
-database = { path = "crates/database" }
 clap = "4.2.7"
+dotenv = "0.15.0"
 
 [dependencies.rocket]
 version = "0.5.0-rc.2"

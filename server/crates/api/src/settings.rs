@@ -1,16 +1,19 @@
 use std::env;
 
 use database::DatabaseSettings;
+use telemetry::TelemetrySettings;
 
 #[derive(Clone)]
 pub struct ApiSettings {
     pub database: DatabaseSettings,
+    pub telemetry: TelemetrySettings,
 }
 
 impl ApiSettings {
     pub fn retrieve() -> Self {
         Self {
             database: get_database(),
+            telemetry: TelemetrySettings::from_env(),
         }
     }
 }

@@ -7,13 +7,15 @@ edition = "2021"
 
 [dependencies]
 database = { path = "../database" }
+telemetry = { path = "../telemetry" }
 serde = "1.0.143"
 serde_json = "1.0.83"
 async-trait = "0.1.64"
 rand = "0.8.5"
 rocket_okapi = { version = "0.8.0-rc.2", features = ["rapidoc"] }
 testcontainers = "0.14.0"
-
+opentelemetry = "0.21.0"
+sys-info = "0.9.1"
 
 [dependencies.rocket]
 version = "0.5.0-rc.2"
