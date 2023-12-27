@@ -1,9 +1,11 @@
 mod system_usage;
+mod fairing;
 
 use system_usage::*;
-
 use std::thread;
 use opentelemetry::global;
+
+pub use fairing::*;
 
 pub fn start() {
     thread::spawn(move || {

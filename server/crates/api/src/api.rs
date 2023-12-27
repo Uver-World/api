@@ -10,6 +10,7 @@ use telemetry::TelemetrySettings;
 
 
 use crate::api_telemetry;
+use crate::api_telemetry::TelemetryFairing;
 use crate::settings::ApiSettings;
 use crate::{cors::CORS, route::ApiRoute, Server};
 
@@ -28,7 +29,8 @@ fn init_telemetry(settings: TelemetrySettings) -> AdHoc {
         AdHoc::on_ignite("Launching telemetry", |rocket| async {
            telemetry::start_telemetry(settings);
             api_telemetry::start();
-            rocket
+
+            rocket.attach(TelemetryFairing)
         })
 }
 
