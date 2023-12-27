@@ -5,6 +5,7 @@
 mod api;
 mod server;
 
+pub mod api_telemetry;
 pub mod cors;
 pub mod model;
 pub mod route;

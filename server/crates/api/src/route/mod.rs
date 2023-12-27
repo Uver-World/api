@@ -6,6 +6,7 @@ use rocket_okapi::okapi::openapi3::OpenApi;
 use rocket_okapi::openapi_get_routes_spec;
 
 use crate::cors;
+use crate::api_telemetry;
 
 pub enum ApiRoute {
     Root,

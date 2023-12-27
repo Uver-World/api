@@ -2,9 +2,6 @@
 
 use clap::{Arg, Command};
 use rocket::*;
-use std::path::Path;
-
-mod update_env;
 
 #[coverage(off)]
 fn export_env() -> Result<(), String> {
@@ -18,11 +15,7 @@ fn export_env() -> Result<(), String> {
     let env_file: Option<&String> = matches.get_one("envfile");
 
     if let Some(env_file) = env_file {
-        let env_path = Path::new(env_file);
-        if !env_path.exists() {
-            return Err(format!("environment file: '{env_file}' does not exist"));
-        }
-        return update_env::update_env(env_path);
+        dotenv::from_filename(env_file).map_err(|err| err.to_string())?;
     }
     Ok(())
 }
@@ -31,6 +24,7 @@ fn export_env() -> Result<(), String> {
 #[launch]
 async fn rocket() -> _ {
     let env = export_env();
+    
     if env.is_err() {
         eprintln!("{:?}", env.err());
         std::process::exit(0);

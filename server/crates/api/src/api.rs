@@ -6,6 +6,11 @@ use rocket_okapi::mount_endpoints_and_merged_docs;
 use rocket_okapi::rapidoc::*;
 use rocket_okapi::settings::UrlObject;
 
+use telemetry::TelemetrySettings;
+
+
+use crate::api_telemetry;
+use crate::api_telemetry::TelemetryFairing;
 use crate::settings::ApiSettings;
 use crate::{cors::CORS, route::ApiRoute, Server};
 
@@ -18,6 +23,14 @@ async fn create_default_website_user(database: &Database) {
         let _ = database.user_manager.create_user(&User::default_website_user(unique_id.to_string(), timestamp)).await;
         println!("A NEW USER WITH THE WEBSITE GROUP HAS BEEN CREATED, PLEASE CHECK DATABASE");
     }
+}
+
+fn init_telemetry(settings: TelemetrySettings) -> AdHoc {
+        AdHoc::on_ignite("Launching telemetry", |rocket| async {
+           telemetry::start_telemetry(settings);
+
+            rocket.attach(TelemetryFairing)
+        })
 }
 
 fn init_db(settings: DatabaseSettings) -> AdHoc {
@@ -38,6 +51,7 @@ pub fn get_rocket() -> Rocket<Build> {
     let settings = ApiSettings::retrieve();
     let mut rocket_builder = Rocket::build()
         .attach(init_db(settings.database.clone()))
+        .attach(init_telemetry(settings.telemetry.clone()))
         .attach(CORS)
         .manage(settings)
         .mount(
