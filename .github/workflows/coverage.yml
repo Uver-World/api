@@ -16,10 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-        
-      - name: Start Docker service
-        run: |
-          sudo systemctl start docker
           
       - name: Install Rust nightly
         uses: actions-rs/toolchain@v1
@@ -31,10 +27,14 @@ jobs:
         run: |
           cargo +nightly install cargo-tarpaulin
 
+      - name: Start Docker service
+        run: |
+          sudo systemctl start docker
+
       - name: Generate code coverage
         run: |
           cd server
-          cargo +nightly tarpaulin --verbose --all --all-features --workspace --timeout 120 --out xml
+          cargo +nightly tarpaulin --verbose --all --all-features --workspace --timeout 180 --out xml
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2
