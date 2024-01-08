@@ -2,7 +2,7 @@ mod system_usage;
 mod fairing;
 
 use database::Database;
-use rocket::{State, tokio::runtime::Runtime};
+use rocket::tokio::runtime::Runtime;
 use system_usage::*;
 use std::thread;
 use opentelemetry::global;

@@ -17,6 +17,10 @@ pub async fn update_project(
         return Custom(response.0, Err(RequestError::from(response).into()));
     }
 
+
+    // log the id of the organization
+    println!("Organization id: {}", id);
+
     // If organization not found 
     match database
         .organization_manager
@@ -26,7 +30,7 @@ pub async fn update_project(
         Ok(Some(_)) => (),
         Ok(None) => {
             return Custom(
-                Status::Ok,
+                Status::NotFound,
                 Err(RequestError::from(Custom(
                     Status::NotFound,
                     format!("Organization not found with id: {id}"),
@@ -51,7 +55,7 @@ pub async fn update_project(
         Ok(Some(_)) => (),
         Ok(None) => {
             return Custom(
-                Status::Ok,
+                Status::NotFound,
                 Err(RequestError::from(Custom(
                     Status::NotFound,
                     format!("Project not found with id: {id}", id = project_update.0.project_id),
@@ -88,9 +92,11 @@ pub async fn update_project(
 #[cfg(test)]
 mod tests {
 
+    use std::vec;
+
     use database::{
         group::Group,
-        project::ProjectUpdateData,
+        project::{ProjectUpdateData, ProjectUpdate},
         Database,
     };
     use rocket::http::{Method, Status};
@@ -101,18 +107,19 @@ mod tests {
     async fn test_unknow_organization() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
             let request_user = testing::get_user(database, Group::Website).await;
             let request_token = request_user.get_token().unwrap();
             let updates = ProjectUpdateData {
                 project_id: "cdcdgr".to_string(),
-                project_update: vec![],
+                project_update: vec![
+                    ProjectUpdate::Name("New name".to_string()),
+                ],
             };
 
             let response = dispatch_request(
                 &client,
                 Method::Patch,
-                format!("/organization/{}/projects", test_user.unique_id),
+                format!("/organization/{}/projects", "cdcdfdfd".to_string()),
                 Some(serde_json::to_string(&updates).unwrap()),
                 Some(request_token.to_string()),
             )

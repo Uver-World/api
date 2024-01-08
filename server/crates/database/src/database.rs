@@ -20,16 +20,10 @@ pub struct DatabaseSettings {
 
 #[derive(Clone)]
 pub struct Database {
-<<<<<<< HEAD
     pub user_manager: Arc<UserManager>,
     pub organization_manager: Arc<OrganizationManager>,
     pub peers_manager: Arc<PeersManager>,
-=======
-    pub user_manager: UserManager,
-    pub organization_manager: OrganizationManager,
-    pub peers_manager: PeersManager,
-    pub project_manager: ProjectManager,
->>>>>>> 199798a (UVW-3 Add create project route)
+    pub project_manager: Arc<ProjectManager>,
 }
 
 impl Database {
@@ -54,16 +48,10 @@ impl Database {
             db.create_collection("projects", None).await?;
         }
         Ok(Database {
-<<<<<<< HEAD
             user_manager: Arc::new(UserManager::init(db.collection("users"))),
             organization_manager: Arc::new(OrganizationManager::init(db.collection("organizations"))),
             peers_manager: Arc::new(PeersManager::init(db.collection("peers"))),
-=======
-            user_manager: UserManager::init(db.collection("users")),
-            organization_manager: OrganizationManager::init(db.collection("organizations")),
-            peers_manager: PeersManager::init(db.collection("peers")),
-            project_manager: ProjectManager::init(db.collection("projects")),
->>>>>>> 199798a (UVW-3 Add create project route)
+            project_manager: Arc::new(ProjectManager::init(db.collection("projects"))),
         })
     }
 }

@@ -8,8 +8,6 @@ use rocket_okapi::settings::UrlObject;
 
 use telemetry::TelemetrySettings;
 
-
-use crate::api_telemetry;
 use crate::api_telemetry::TelemetryFairing;
 use crate::settings::ApiSettings;
 use crate::{cors::CORS, route::ApiRoute, Server};

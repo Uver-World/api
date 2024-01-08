@@ -62,26 +62,27 @@ pub async fn get_projects_from_organization(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, Database};
-    use rocket::http::{Method, Status};
-    use crate::testing::{self, dispatch_request, run_test};
+    use database::{Database, group::Group};
+    use rocket::http::Method;
+    use rocket::http::Status;
+    use serde_json::json;
+    use crate::testing::{get_user, dispatch_request, run_test};
 
     #[rocket::async_test]
     async fn get_projects_from_organization_not_found() {
-        run_test(|client| async {
+        run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::Website).await;
+            let request_user = get_user(database, Group::Website).await;
 
             let response = dispatch_request(
                 &client,
                 Method::Get,
-                "/organizations/123/projects".to_string(),
+                format!("/organization/id/{}/projects", "unknow"),
                 None,
-                Some(test_user.get_token().unwrap().to_string()),
-            )
-            .await;
+                Some(request_user.get_token().unwrap().to_string()),
+            );
 
-            assert_eq!(response.status(), Status::NotFound);
+            assert_eq!(response.await.status(), Status::NotFound);
         })
         .await;
     }
