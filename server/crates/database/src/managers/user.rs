@@ -53,6 +53,17 @@ impl UserManager {
         }
     }
 
+    pub async fn from_email(&self, email: &str) -> Result<Option<User>, Error> {
+        match self
+            .users
+            .find_one(doc! { "authentication.Credentials.email": email.to_string() }, None)
+            .await?
+        {
+            Some(user) => Ok(Some(user)),
+            None => Ok(None),
+        }
+    }
+
     pub async fn delete_user(
         &self,
         uuid: Option<&str>,
