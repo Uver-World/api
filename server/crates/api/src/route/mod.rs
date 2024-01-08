@@ -32,6 +32,7 @@ impl ApiRoute {
                 user::access_server,
                 user::has_access,
                 user::server_disconnect,
+                user::from_email,
             ],
             Self::Organization => openapi_get_routes_spec![
                 organization::add_member,
