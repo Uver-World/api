@@ -16,9 +16,10 @@ pub enum UserUpdate {
 impl UserUpdate {
     pub fn convert(&self) -> Option<(String, Bson)> {
         match self {
-            Self::Username(username) => to_bson(username)
-                .map(|username| ("username".to_string(), username))
-                .ok(),
+            UserUpdate::Username(username) => Some((
+                "authentication.Credentials.username".to_string(),
+                to_bson(username).unwrap(),
+            )),
         }
     }
 }
@@ -29,7 +30,6 @@ pub struct User {
     pub unique_id: String,
     pub creation_date: String,
     pub logins: Vec<Login>,
-    pub username: String,
     pub group: Group,
 }
 
@@ -55,7 +55,6 @@ impl User {
             unique_id,
             creation_date: timestamp.to_string(),
             logins: vec![Login::new("127.0.0.1".to_string(), timestamp, Authentication::None)],
-            username: "ADMIN".to_string(),
             group: Group::Website
         }
     }

@@ -46,7 +46,6 @@ impl Authentication {
             unique_id: unique_id.clone(),
             creation_date: timestamp.to_string(),
             logins: Vec::new(),
-            username: unique_id.clone(),
             group: Group::Guest,
         };
 

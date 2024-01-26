@@ -34,7 +34,6 @@ pub async fn create_user(
             timestamp,
             authentication,
         )],
-        username: format!("{group:?}"),
         group,
     };
 
