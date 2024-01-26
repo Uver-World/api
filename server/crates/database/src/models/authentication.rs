@@ -18,6 +18,7 @@ pub enum Authentication {
 #[derive(Deserialize, Debug, Serialize, Clone, JsonSchema, PartialEq)]
 pub struct Credentials {
     pub email: String,
+    pub username: String,
     pub password: String,
 }
 

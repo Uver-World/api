@@ -101,6 +101,7 @@ mod tests {
             let request_token = request_user.get_token().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: "test".to_string(),
                 password: "test".to_string(),
             };
 
@@ -172,6 +173,7 @@ mod tests {
 
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: "test".to_string(),
                 password: "test".to_string(),
             };
 
@@ -202,6 +204,7 @@ mod tests {
 
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: "test".to_string(),
                 password: "test".to_string(),
             };
 

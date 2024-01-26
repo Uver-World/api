@@ -35,6 +35,7 @@ async fn _update_auth(
                     id,
                     &Credentials {
                         email: credentials.email,
+                        username: credentials.username,
                         password: credentials.password,
                     }
                     .new_auth(),
@@ -87,6 +88,7 @@ mod tests {
             let user_token = test_user.get_token().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: "test".to_string(),
                 password: "test".to_string(),
             };
 
@@ -129,6 +131,7 @@ mod tests {
             let request_token = request_user.get_token().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: "test".to_string(),
                 password: "test".to_string(),
             };
 
@@ -184,6 +187,7 @@ mod tests {
         run_test(|client| async move {
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: "test".to_string(),
                 password: "test".to_string(),
             };
 
