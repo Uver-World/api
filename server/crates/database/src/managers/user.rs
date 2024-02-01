@@ -24,6 +24,7 @@ impl UserManager {
             .count_documents(doc! { "authentication.Credentials.email": email }, None)
             .await?
             != 0)
+            
     }
 
     pub async fn create_user(&self, user: &User) -> Result<InsertOneResult, Error> {

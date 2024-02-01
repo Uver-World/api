@@ -17,14 +17,27 @@ use crate::{
 pub async fn renew(
     user_data: UserData,
     database: &State<Database>,
-    login: Json<Login>,
+    login: Option<Json<Login>>,
     remot_addr: ApiSocketAddr,
 ) -> Custom<Result<String, Json<RequestError>>> {
     let ip = remot_addr.0.ip().to_string();
-    match login.0 {
+
+    if login.is_none() {
+        return Custom(
+            Status::Ok,
+            Err(RequestError::from(Custom(
+                Status::BadRequest,
+                "Credentials are required.".to_string(),
+            ))
+            .into()),
+        );
+    }
+
+    match login.unwrap().0 {
         Login::Credentials(credentials) => {
             let auth = Authentication::Credentials(credentials);
             let user = auth.get(&database.user_manager.users).await;
+
             renew_token(user, ip, auth, &database.user_manager).await
         }
         Login::UserId(user_id) => {

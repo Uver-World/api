@@ -36,6 +36,7 @@ async fn _update_auth(
                     &Credentials {
                         email: credentials.email,
                         username: credentials.username,
+                        avatar: credentials.avatar,
                         password: credentials.password,
                     }
                     .new_auth(),
@@ -89,6 +90,7 @@ mod tests {
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
                 username: "test".to_string(),
+                avatar: "default.png".to_string(),
                 password: "test".to_string(),
             };
 
@@ -132,6 +134,7 @@ mod tests {
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
                 username: "test".to_string(),
+                avatar: "default.png".to_string(),
                 password: "test".to_string(),
             };
 
@@ -188,6 +191,7 @@ mod tests {
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
                 username: "test".to_string(),
+                avatar: "default.png".to_string(),
                 password: "test".to_string(),
             };
 

@@ -29,7 +29,9 @@ pub async fn register(
     if login.is_none() {
         return _register(Authentication::None, ip, &database.user_manager).await;
     }
+    
     let login = login.unwrap();
+    
     match login.0 {
         Login::Credentials(credentials) => {
             let auth = Authentication::Credentials(credentials);
@@ -102,6 +104,7 @@ mod tests {
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
                 username: "test".to_string(),
+                avatar: "test".to_string(),
                 password: "test".to_string(),
             };
 
@@ -174,6 +177,7 @@ mod tests {
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
                 username: "test".to_string(),
+                avatar: "test".to_string(),
                 password: "test".to_string(),
             };
 
@@ -205,6 +209,7 @@ mod tests {
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
                 username: "test".to_string(),
+                avatar: "test".to_string(),
                 password: "test".to_string(),
             };
 
