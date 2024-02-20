@@ -11,7 +11,7 @@ use crate::{
 ///
 /// Requires 'Website' group
 #[openapi(tag = "Organizations")]
-#[post("/create", data = "<organization>", format = "application/json")] // <- route attribute
+#[post("/", data = "<organization>", format = "application/json")] // <- route attribute
 pub async fn create(
     user_data: UserData,
     database: &State<Database>,
@@ -85,7 +85,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/organization/create"),
+                format!("/organization"),
                 Some(serde_json::to_string(&body).unwrap()),
                 Some(request_token.to_string()),
             )
@@ -117,7 +117,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/organization/create"),
+                format!("/organization"),
                 Some(serde_json::to_string(&body).unwrap()),
                 Some(request_token.to_string()),
             )
@@ -158,7 +158,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/organization/create"),
+                format!("/organization"),
                 Some(serde_json::to_string(&body).unwrap()),
                 Some(request_token.to_string()),
             )
@@ -186,7 +186,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/organization/create"),
+                format!("/organization"),
                 Some(serde_json::to_string(&body).unwrap()),
                 None,
             )
