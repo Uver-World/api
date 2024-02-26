@@ -1,6 +1,6 @@
 use mongodb::{error::Error, *};
 
-use crate::managers::{OrganizationManager, PeersManager, UserManager, ProjectManager};
+use crate::managers::{OrganizationManager, PeersManager, UserManager, ProjectManager, LicenseManager};
 
 #[derive(Clone)]
 pub struct DatabaseSettings {
@@ -21,6 +21,7 @@ pub struct Database {
     pub organization_manager: OrganizationManager,
     pub peers_manager: PeersManager,
     pub project_manager: ProjectManager,
+    pub license_manager: LicenseManager,
 }
 
 impl Database {
@@ -44,11 +45,16 @@ impl Database {
         if !names.contains(&"projects".to_string()) {
             db.create_collection("projects", None).await?;
         }
+        if !names.contains(&"licenses".to_string()) {
+            db.create_collection("licenses", None).await?;
+        }
+
         Ok(Database {
             user_manager: UserManager::init(db.collection("users")),
             organization_manager: OrganizationManager::init(db.collection("organizations")),
             peers_manager: PeersManager::init(db.collection("peers")),
             project_manager: ProjectManager::init(db.collection("projects")),
+            license_manager: LicenseManager::init(db.collection("licenses")),
         })
     }
 }
