@@ -13,6 +13,7 @@ async-trait = "0.1.64"
 rand = "0.8.5"
 rocket_okapi = { version = "0.8.0-rc.2", features = ["rapidoc"] }
 testcontainers = "0.14.0"
+gravatar = "0.2.0"
 
 
 [dependencies.rocket]

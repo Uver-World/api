@@ -42,6 +42,25 @@ impl Authentication {
                 return Ok(None);
             }
         }
+
+        // Store the avatar in ./uploads/avatars
+        // Example:
+        let avatar_filename = match &self {
+            Authentication::Credentials(credentials) => {
+                if let Some(avatar) = &credentials.avatar {
+                    avatar
+                } else {
+                    "default_avatar.jpg" // Or any default avatar filename
+                }
+            }
+            Authentication::None => "default_avatar.jpg",
+        };
+        let avatar_path = format!("./uploads/avatars/{}", avatar_filename);
+        let mut self_clone = self.clone();
+        if let Authentication::Credentials(credentials) = &mut self_clone {
+            credentials.avatar = Some(avatar_path.clone());
+        }
+
         let user = User {
             authentication: self.clone(),
             unique_id: unique_id.clone(),
@@ -49,6 +68,7 @@ impl Authentication {
             logins: Vec::new(),
             group: Group::Guest,
         };
+
 
         let _ = users
             .insert_one(&user, None)
@@ -72,7 +92,6 @@ impl Authentication {
             Authentication::None => Ok(None),
         }
     }
-
 
     pub fn get_name(&self) -> String {
         match self {

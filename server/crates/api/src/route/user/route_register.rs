@@ -1,6 +1,7 @@
-use database::{authentication::Authentication, group::Group, managers::UserManager, Database};
+use database::{authentication::Authentication, authentication::Credentials, group::Group, managers::UserManager, Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
+use gravatar::{Gravatar, Rating};
 
 use crate::{
     model::{api_socket_addr::ApiSocketAddr, login::Login, user_token::UserData},
@@ -34,7 +35,23 @@ pub async fn register(
     
     match login.0 {
         Login::Credentials(credentials) => {
-            let auth = Authentication::Credentials(credentials);
+            let url = Gravatar::new(credentials.email.as_str())
+                .set_size(Some(150))
+                .set_rating(Some(Rating::Pg))
+                .set_default(Some(gravatar::Default::Retro))
+                .image_url();
+
+            // Get the image url and store it in the credentials.avatar
+            // let avatar = url.to_string();
+            let credentials = Credentials {
+                email: credentials.email,
+                username: credentials.username,
+                avatar: Some(url.to_string()),
+                password: credentials.password,
+            };
+
+            let auth = Authentication::Credentials(credentials.clone());
+
             _register(auth, ip, &database.user_manager).await
         }
         _ => Custom(
@@ -103,8 +120,8 @@ mod tests {
             let request_token = request_user.get_token().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
-                username: "test".to_string(),
-                avatar: "test".to_string(),
+                username: Option::Some("test".to_string()),
+                avatar: Option::Some("test".to_string()),
                 password: "test".to_string(),
             };
 
@@ -176,8 +193,8 @@ mod tests {
 
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
-                username: "test".to_string(),
-                avatar: "test".to_string(),
+                username: Option::Some("test".to_string()),
+                avatar: Option::Some("test".to_string()),
                 password: "test".to_string(),
             };
 
@@ -208,8 +225,8 @@ mod tests {
 
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
-                username: "test".to_string(),
-                avatar: "test".to_string(),
+                username: Option::Some("test".to_string()),
+                avatar: Option::Some("test".to_string()),
                 password: "test".to_string(),
             };
 

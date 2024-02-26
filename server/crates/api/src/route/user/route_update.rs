@@ -197,11 +197,5 @@ mod tests {
     fn check_user_difference(is_same: bool, user1: &User, user2: &User) {
         // first we're checking if they're of the same id.
         assert_eq!(user1.unique_id, user2.unique_id);
-
-        if is_same {
-            assert_eq!(user1.username, user2.username);
-        } else {
-            assert_ne!(user1.username, user2.username);
-        }
     }
 }

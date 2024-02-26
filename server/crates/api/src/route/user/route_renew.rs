@@ -150,6 +150,8 @@ mod tests {
             let database = client.rocket().state::<Database>().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: Option::Some("test".to_string()),
+                avatar: Option::Some("test".to_string()),
                 password: "test".to_string(),
             };
             let test_user = testing::create_user(
@@ -214,6 +216,8 @@ mod tests {
         run_test(|client| async move {
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: Option::Some("test".to_string()),
+                avatar: Option::Some("test".to_string()),
                 password: "test".to_string(),
             };
             let response = dispatch_request(
