@@ -72,7 +72,7 @@ mod tests {
     use crate::testing::{self, dispatch_request, run_test};
 
     #[rocket::async_test]
-    async fn test_create_license() {
+    async fn test_get_licenses() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
             let test_user = testing::get_user(database, Group::User).await;
@@ -81,32 +81,31 @@ mod tests {
 
             let response = dispatch_request(
                 &client,
-                Method::Post,
-                format!("/user/{}/license", test_user.unique_id),
+                Method::Get,
+                format!("/user/id/{}/license", test_user.unique_id),
                 None,
                 Some(request_token.to_string()),
             )
             .await;
 
-            assert_eq!(response.status(), Status::Created);
-            let license = response.into_json::<License>().await.unwrap();
-            assert_eq!(license.user_id, test_user.unique_id);
+            assert_eq!(response.status(), Status::Ok);
+            let licenses = response.into_json::<Vec<License>>().await.unwrap();
+            assert_eq!(licenses.len(), 0);
         })
         .await;
     }
 
     #[rocket::async_test]
-    async fn test_create_license_unknown_user() {
+    async fn test_get_licenses_unknown_user() {
         run_test(|client| async move {
-            let request_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website)
-                    .await;
+            let request_user = testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website).await;
             let request_token = request_user.get_token().unwrap();
+            let id = "NO_ID";
 
             let response = dispatch_request(
                 &client,
-                Method::Post,
-                format!("/user/unknow/license"),
+                Method::Get,
+                format!("/user/id/{}/license", id),
                 None,
                 Some(request_token.to_string()),
             )
