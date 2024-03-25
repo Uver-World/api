@@ -68,7 +68,7 @@ mod tests {
 
     #[rocket::async_test]
     async fn get_projects_from_organization_not_found() {
-        run_test(|client| async {
+        run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
             let test_user = testing::get_user(database, Group::Website).await;
 

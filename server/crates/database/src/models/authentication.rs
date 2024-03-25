@@ -1,5 +1,5 @@
 use mongodb::{
-    bson::{doc, to_bson},
+    bson::doc,
     options::FindOneOptions,
     Collection,
 };
@@ -18,7 +18,8 @@ pub enum Authentication {
 #[derive(Deserialize, Debug, Serialize, Clone, JsonSchema, PartialEq)]
 pub struct Credentials {
     pub email: String,
-    pub username: String,
+    pub username: Option<String>,
+    pub avatar: Option<String>,
     pub password: String,
 }
 
@@ -41,6 +42,25 @@ impl Authentication {
                 return Ok(None);
             }
         }
+
+        // Store the avatar in ./uploads/avatars
+        // Example:
+        let avatar_filename = match &self {
+            Authentication::Credentials(credentials) => {
+                if let Some(avatar) = &credentials.avatar {
+                    avatar
+                } else {
+                    "default_avatar.jpg" // Or any default avatar filename
+                }
+            }
+            Authentication::None => "default_avatar.jpg",
+        };
+        let avatar_path = format!("./uploads/avatars/{}", avatar_filename);
+        let mut self_clone = self.clone();
+        if let Authentication::Credentials(credentials) = &mut self_clone {
+            credentials.avatar = Some(avatar_path.clone());
+        }
+
         let user = User {
             authentication: self.clone(),
             unique_id: unique_id.clone(),
@@ -48,6 +68,7 @@ impl Authentication {
             logins: Vec::new(),
             group: Group::Guest,
         };
+
 
         let _ = users
             .insert_one(&user, None)
@@ -57,17 +78,19 @@ impl Authentication {
     }
 
     pub async fn get(&self, users: &Collection<User>) -> Result<Option<User>, String> {
-        users
-            .find_one(
-                doc! {"authentication": to_bson(&self).unwrap()},
-                Some(
-                    FindOneOptions::builder()
-                        .projection(doc! {"token": 0})
-                        .build(),
-                ),
-            )
-            .await
-            .map_err(|err| err.to_string())
+        match self {
+            Authentication::Credentials(credentials) => {
+                let filter = doc! {"authentication.Credentials.email": &credentials.email, "authentication.Credentials.password": &credentials.password};
+                let options = FindOneOptions::default();
+
+                if let Some(user) = users.find_one(filter, options).await.map_err(|err| err.to_string())? {
+                    Ok(Some(user))
+                } else {
+                    Ok(None)
+                }
+            }
+            Authentication::None => Ok(None),
+        }
     }
 
     pub fn get_name(&self) -> String {
@@ -80,5 +103,12 @@ impl Authentication {
 
     pub fn token(&self) -> Option<String> {
         None
+    }
+
+    pub fn credentials(&self) -> &Credentials {
+        match self {
+            Self::Credentials(credentials) => credentials,
+            Self::None => panic!("No credentials"),
+        }
     }
 }

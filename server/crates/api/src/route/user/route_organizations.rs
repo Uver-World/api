@@ -57,11 +57,11 @@ mod tests {
                 None,
                 Some(request_token.to_string()),
             )
-            .await;
+            .await; // Add .await here
 
             assert_eq!(response.status(), Status::Ok);
             let organizations = response.into_json::<Vec<Organization>>().await.unwrap();
             assert_eq!(organizations.len(), 0);
-        });
+        }).await;
     }
 }

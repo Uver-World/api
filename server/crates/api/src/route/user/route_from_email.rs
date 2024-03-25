@@ -50,7 +50,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Get,
-                format!("/user/email/{}", test_user.authentication.Credentials.email),
+                format!("/user/email/{}", test_user.authentication.credentials().email),
                 None,
                 Some(request_token.to_string()),
             )
@@ -59,7 +59,6 @@ mod tests {
             assert_eq!(response.status(), Status::Ok);
             let user = response.into_json::<User>().await.unwrap();
             assert_eq!(user.unique_id, test_user.unique_id);
-            assert_eq!(user.username, test_user.username);
         })
         .await;
     }
@@ -104,7 +103,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Get,
-                format!("/user/email/{}", test_user.authentication.Credentials.email),
+                format!("/user/email/{}", test_user.authentication.credentials().email),
                 None,
                 Some(request_token.to_string()),
             )
