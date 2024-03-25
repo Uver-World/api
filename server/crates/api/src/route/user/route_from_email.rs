@@ -50,7 +50,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Get,
-                format!("/user/email/{}", test_user.authentication.Credentials.email),
+                format!("/user/email/{}", test_user.authentication.credentials().email),
                 None,
                 Some(request_token.to_string()),
             )
@@ -103,7 +103,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Get,
-                format!("/user/email/{}", test_user.authentication.Credentials.email),
+                format!("/user/email/{}", test_user.authentication.credentials().email),
                 None,
                 Some(request_token.to_string()),
             )

@@ -51,7 +51,7 @@ pub async fn update_project(
         Ok(Some(_)) => (),
         Ok(None) => {
             return Custom(
-                Status::Ok,
+                Status::NotFound,
                 Err(RequestError::from(Custom(
                     Status::NotFound,
                     format!("Project not found with id: {id}", id = project_update.0.project_id),
@@ -144,6 +144,8 @@ mod tests {
                 Some(request_token.to_string()),
             )
             .await;
+
+            println!("{:?}", response.status());
 
             assert_eq!(response.status(), Status::NotFound);
         })

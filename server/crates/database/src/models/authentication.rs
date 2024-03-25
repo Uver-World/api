@@ -104,4 +104,11 @@ impl Authentication {
     pub fn token(&self) -> Option<String> {
         None
     }
+
+    pub fn credentials(&self) -> &Credentials {
+        match self {
+            Self::Credentials(credentials) => credentials,
+            Self::None => panic!("No credentials"),
+        }
+    }
 }
