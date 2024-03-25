@@ -1,3 +1,4 @@
+mod route_get_licenses;
 mod route_create_license;
 mod route_access_server;
 mod route_delete_from_id;
@@ -15,6 +16,7 @@ mod route_update_auth;
 mod route_organizations;
 mod route_from_email;
 
+pub use route_get_licenses::*;
 pub use route_create_license::*;
 pub use route_access_server::*;
 pub use route_delete_from_id::*;

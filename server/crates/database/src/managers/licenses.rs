@@ -1,9 +1,8 @@
 pub use crate::models::license::License;
 
+use futures::StreamExt;
 use mongodb::{
-    error::Error,
-    results::InsertOneResult,
-    Collection,
+    bson::doc, error::Error, results::InsertOneResult, Collection
 };
 
 pub struct LicenseManager {
@@ -22,5 +21,20 @@ impl LicenseManager {
         let target = self.licenses.insert_one(license, None).await?;
         Ok(target)
     }
-}
 
+    // Returns all licenses for a user
+    pub async fn get_licenses(
+        &self,
+        user_id: &str,
+    ) -> Result<Vec<License>, Error> {
+        let filter = doc! {"user_id": user_id};
+        let mut cursor: mongodb::Cursor<License>  = self.licenses.find(filter, None).await?;
+        let mut licenses = Vec::new();
+        
+        while let Some(project) = cursor.next().await {
+            licenses.push(project?);
+        }
+
+        Ok(licenses)
+    }
+}

@@ -19,6 +19,7 @@ impl ApiRoute {
             Self::Root => openapi_get_routes_spec![cors::cors_options],
             Self::User => openapi_get_routes_spec![
                 user::create_license,
+                user::get_licenses,
                 user::get_organizations,
                 user::renew,
                 user::register,
