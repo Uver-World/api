@@ -22,7 +22,6 @@ impl LicenseManager {
         Ok(target)
     }
 
-    // Returns all licenses for a user
     pub async fn get_licenses(
         &self,
         user_id: &str,
@@ -36,5 +35,19 @@ impl LicenseManager {
         }
 
         Ok(licenses)
+    }
+
+    pub async fn get_license(
+        &self,
+        license_id: &str,
+    ) -> Result<Option<License>, Error> {
+        match self
+            .licenses
+            .find_one(doc! { "license": license_id.to_string() }, None)
+            .await?
+        {
+            Some(license) => Ok(Some(license)),
+            None => Ok(None),
+        }
     }
 }
