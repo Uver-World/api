@@ -29,7 +29,8 @@ pub async fn server_authenticate(
             let server_peer = Peer {
                 room_id: Server::generate_unique_id().to_string(),
                 creation_date: Server::current_time().to_string(),
-                signaling_hostname: "127.0.0.1".to_string(),
+                signaling_hostname: "x2025uverworld1150768037000.francecentral.cloudapp.azure.com"
+                    .to_string(),
                 signaling_port: 3536,
                 server_unique_id: server_unique_id,
             };
