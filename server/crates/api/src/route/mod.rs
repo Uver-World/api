@@ -18,6 +18,8 @@ impl ApiRoute {
         match self {
             Self::Root => openapi_get_routes_spec![cors::cors_options],
             Self::User => openapi_get_routes_spec![
+                user::create_license,
+                user::get_licenses,
                 user::get_organizations,
                 user::renew,
                 user::register,
@@ -31,6 +33,8 @@ impl ApiRoute {
                 user::access_server,
                 user::has_access,
                 user::server_disconnect,
+                user::from_email,
+                user::check_licenses,
             ],
             Self::Organization => openapi_get_routes_spec![
                 organization::add_member,

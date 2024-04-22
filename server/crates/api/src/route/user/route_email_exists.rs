@@ -46,6 +46,8 @@ mod tests {
             let database = client.rocket().state::<Database>().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: Option::Some("test".to_string()),
+                avatar: Option::Some("test".to_string()),
                 password: "test".to_string(),
             };
             let _ = testing::create_user(
@@ -110,6 +112,8 @@ mod tests {
             let request_token = request_user.get_token().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: Option::Some("test".to_string()),
+                avatar: Option::Some("test".to_string()),
                 password: "test".to_string(),
             };
             let _ = testing::create_user(
@@ -139,6 +143,8 @@ mod tests {
             let database = client.rocket().state::<Database>().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
+                username: Option::Some("test".to_string()),
+                avatar: Option::Some("test".to_string()),
                 password: "test".to_string(),
             };
             let _ = testing::create_user(

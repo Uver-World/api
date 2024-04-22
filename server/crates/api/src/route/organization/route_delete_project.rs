@@ -158,6 +158,7 @@ mod tests {
         .await;
     }
 
+    #[rocket::async_test]
     async fn test_unknow_project() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();

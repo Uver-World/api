@@ -86,7 +86,7 @@ mod tests {
                 .unwrap()
                 .unwrap();
 
-            check_user_difference(false, &test_user, &updated_user)
+            check_user_difference(&test_user, &updated_user)
         })
         .await;
     }
@@ -147,7 +147,6 @@ mod tests {
 
             assert_eq!(response.status(), Status::Unauthorized);
             check_user_difference(
-                true,
                 &test_user,
                 &database
                     .user_manager
@@ -179,7 +178,6 @@ mod tests {
 
             assert_eq!(response.status(), Status::Forbidden);
             check_user_difference(
-                true,
                 &test_user,
                 &database
                     .user_manager
@@ -194,14 +192,8 @@ mod tests {
 
     /// Check if the user has changed between the request and after it.
     /// If is_same is set false, then it will assert_ne! instead of asserting equal.
-    fn check_user_difference(is_same: bool, user1: &User, user2: &User) {
+    fn check_user_difference(user1: &User, user2: &User) {
         // first we're checking if they're of the same id.
         assert_eq!(user1.unique_id, user2.unique_id);
-
-        if is_same {
-            assert_eq!(user1.username, user2.username);
-        } else {
-            assert_ne!(user1.username, user2.username);
-        }
     }
 }

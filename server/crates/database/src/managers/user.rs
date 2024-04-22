@@ -24,6 +24,7 @@ impl UserManager {
             .count_documents(doc! { "authentication.Credentials.email": email }, None)
             .await?
             != 0)
+            
     }
 
     pub async fn create_user(&self, user: &User) -> Result<InsertOneResult, Error> {
@@ -46,6 +47,17 @@ impl UserManager {
         match self
             .users
             .find_one(doc! { "unique_id": id.to_string() }, None)
+            .await?
+        {
+            Some(user) => Ok(Some(user)),
+            None => Ok(None),
+        }
+    }
+
+    pub async fn from_email(&self, email: &str) -> Result<Option<User>, Error> {
+        match self
+            .users
+            .find_one(doc! { "authentication.Credentials.email": email.to_string() }, None)
             .await?
         {
             Some(user) => Ok(Some(user)),

@@ -62,6 +62,6 @@ mod tests {
             assert_eq!(response.status(), Status::Ok);
             let organizations = response.into_json::<Vec<Organization>>().await.unwrap();
             assert_eq!(organizations.len(), 0);
-        });
+        }).await;
     }
 }

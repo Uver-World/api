@@ -1,0 +1,16 @@
+UGRM-108 add tests
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Date:      Mon Mar 25 16:54:53 2024 -0400
+#
+# On branch feature/avatar
+# Your branch is up to date with 'origin/feature/avatar'.
+#
+# Changes to be committed:
+#	modified:   server/crates/api/src/route/mod.rs
+#	modified:   server/crates/api/src/route/user/mod.rs
+#	new file:   server/crates/api/src/route/user/route_check_license.rs
+#	modified:   server/crates/database/src/managers/licenses.rs
+#
