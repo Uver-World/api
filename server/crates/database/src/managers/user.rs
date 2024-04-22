@@ -121,3 +121,11 @@ impl UserManager {
         Ok(documents == 0)
     }
 }
+
+impl Clone for UserManager {
+    fn clone(&self) -> Self {
+        Self {
+            users: self.users.clone(),
+        }
+    }
+}

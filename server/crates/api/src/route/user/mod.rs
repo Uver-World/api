@@ -13,7 +13,6 @@ mod route_server_authenticate;
 mod route_server_disconnect;
 mod route_update;
 mod route_update_auth;
-mod route_organizations;
 mod route_from_email;
 mod route_check_license;
 
@@ -32,6 +31,5 @@ pub use route_server_authenticate::*;
 pub use route_server_disconnect::*;
 pub use route_update::*;
 pub use route_update_auth::*;
-pub use route_organizations::*;
 pub use route_from_email::*;
 pub use route_check_license::*;

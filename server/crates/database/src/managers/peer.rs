@@ -52,3 +52,11 @@ impl PeersManager {
         ))
     }
 }
+
+impl Clone for PeersManager {
+    fn clone(&self) -> Self {
+        Self {
+            peers: self.peers.clone(),
+        }
+    }
+}

@@ -212,3 +212,11 @@ impl OrganizationManager {
             .await
     }
 }
+
+impl Clone for OrganizationManager {
+    fn clone(&self) -> Self {
+        Self {
+            organizations: self.organizations.clone(),
+        }
+    }
+}

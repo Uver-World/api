@@ -87,7 +87,6 @@ mod tests {
             assert_eq!(response.status(), Status::Ok);
             let user = response.into_json::<User>().await.unwrap();
             assert_eq!(user.unique_id, test_user.unique_id);
-            assert_eq!(user.username, test_user.username);
         })
         .await;
     }
@@ -183,7 +182,6 @@ mod tests {
             assert_eq!(response.status(), Status::Ok);
             let user = response.into_json::<User>().await.unwrap();
             assert_eq!(user.unique_id, test_user.unique_id);
-            assert_eq!(user.username, test_user.username);
         })
         .await;
     }

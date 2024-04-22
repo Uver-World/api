@@ -78,3 +78,10 @@ impl ProjectManager {
     }
 }
 
+impl Clone for ProjectManager {
+    fn clone(&self) -> Self {
+        Self {
+            projects: self.projects.clone(),
+        }
+    }
+}
