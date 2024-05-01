@@ -120,6 +120,12 @@ impl UserManager {
         let documents = self.users.count_documents(filter, None).await?;
         Ok(documents == 0)
     }
+
+    pub async fn update_group(&self, uuid: String, group: Group) -> Result<UpdateResult, Error> {
+        let filter = doc! {"unique_id": uuid.to_string()};
+        let update = doc! {"$set": {"group": format!("{:?}", group)}};
+        self.users.update_one(filter, update, None).await
+    }
 }
 
 impl Clone for UserManager {
