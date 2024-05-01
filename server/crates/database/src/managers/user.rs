@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use futures::StreamExt;
 use mongodb::{
     bson::{doc, to_bson, Bson},
     error::Error,
@@ -125,6 +126,16 @@ impl UserManager {
         let filter = doc! {"unique_id": uuid.to_string()};
         let update = doc! {"$set": {"group": format!("{:?}", group)}};
         self.users.update_one(filter, update, None).await
+    }
+
+    pub async fn get_users_by_group(&self, group: Group) -> Result<Vec<User>, Error> {
+        let filter = doc! {"group": format!("{:?}", group)};
+        let mut cursor = self.users.find(filter, None).await?;
+        let mut users = Vec::new();
+        while let Some(user) = cursor.next().await {
+            users.push(user?);
+        }
+        Ok(users)
     }
 }
 

@@ -38,13 +38,16 @@ pub async fn create(
         );
     }
 
+    // find all users with group server
+    let users = database.user_manager.get_users_by_group(Group::Server).await.unwrap();
+
     let organization = Organization {
         unique_id: Server::generate_unique_id().to_string(),
         creation_date: Server::current_time().to_string(),
         name: raw_organization.name,
         member_ids: Vec::new(),
         owner_id: raw_organization.owner_id,
-        server_ids: Vec::new(),
+        server_ids: users.iter().map(|user| user.unique_id.clone()).collect(),
         projects_ids: Vec::new(),
     };
 
