@@ -7,3 +7,5 @@ pub mod token;
 pub mod user;
 pub mod project;
 pub mod license;
+pub mod permission;
+pub mod server;

@@ -1,6 +1,9 @@
+use bson::doc;
 use mongodb::{error::Error, *};
 
-use crate::managers::{OrganizationManager, PeersManager, UserManager, ProjectManager, LicenseManager};
+use crate::{managers::{LicenseManager, OrganizationManager, PeersManager, PermissionManager, ProjectManager, UserManager}, permission::Permission};
+
+use crate::server::Server;
 
 #[derive(Clone)]
 pub struct DatabaseSettings {
@@ -23,6 +26,7 @@ pub struct Database {
     pub peers_manager: PeersManager,
     pub project_manager: ProjectManager,
     pub license_manager: LicenseManager,
+    pub permission_manager: PermissionManager,
 }
 
 impl Database {
@@ -49,6 +53,83 @@ impl Database {
         if !names.contains(&"licenses".to_string()) {
             db.create_collection("licenses", None).await?;
         }
+        if !names.contains(&"permissions".to_string()) {
+            db.create_collection("permissions", None).await?;
+        }
+
+        // clear permissions collection
+        let permissions = vec![
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "organisation.all".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "organisation.see".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "organisation.edit".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "organisation.create".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "organisation.members.all".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "organisation.members.add".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "organisation.members.remove".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "organisation.members.edit".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "organisation.events.see".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "profile.edit".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "profile.see".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "profile.reset_password".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "license.create".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "client.download".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "project.see".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "project.edit".to_string(),
+            },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "project.create".to_string(),
+            },
+        ];
+        db.collection::<Permission>("permissions").delete_many(doc! {}, None).await?;
+        db.collection::<Permission>("permissions").insert_many(permissions, None).await?;
 
         Ok(Database {
             user_manager: UserManager::init(db.collection("users")),
@@ -56,6 +137,7 @@ impl Database {
             peers_manager: PeersManager::init(db.collection("peers")),
             project_manager: ProjectManager::init(db.collection("projects")),
             license_manager: LicenseManager::init(db.collection("licenses")),
+            permission_manager: PermissionManager::init(db.collection("permissions")),
         })
     }
 }

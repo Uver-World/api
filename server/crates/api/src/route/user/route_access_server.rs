@@ -1,4 +1,4 @@
-use database::{group::Group, organization, peer::Peer, Database};
+use database::{group::Group, peer::Peer, Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
