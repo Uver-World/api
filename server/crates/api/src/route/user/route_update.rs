@@ -13,7 +13,7 @@ pub async fn update(
     token: String,
     user_update: Json<Vec<UserUpdate>>,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
+    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::User]) {
         return Custom(response.0, Err(RequestError::from(response).into()));
     }
     match database.user_manager.from_token(&token).await {

@@ -52,6 +52,21 @@ pub async fn create_license(
         license: generate_license(),
     };
 
+    if user.group == Group::Guest {
+        match database.user_manager.update_group(user.unique_id.clone(), Group::User).await {
+            Ok(_) => (),
+            Err(_) => return Custom(
+                Status::InternalServerError,
+                Err(RequestError::from(Custom(
+                    Status::InternalServerError,
+                    "Failed to update user group.".to_string(),
+                ))
+                .into()),
+            ),
+        }
+    }
+    
+
     match database.license_manager.create(&license).await {
         Ok(_) => Custom(Status::Created, Ok(Json(license))),
         Err(_) => Custom(

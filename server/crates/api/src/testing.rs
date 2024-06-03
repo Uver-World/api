@@ -121,6 +121,9 @@ fn set_test_env(mongo_port: u16) {
     env::set_var("MONGODB_USERNAME", "test");
     env::set_var("MONGODB_PASSWORD", "test");
     env::set_var("MONGODB_DATABASE", "test");
+    env::set_var("OTEL_RESOURCE_ATTRIBUTES", "test");
+    env::set_var("OTEL_EXPORTER_OTLP_ENDPOINT", "test");
+    env::set_var("OTEL_EXPORTER_OTLP_TOKEN", "test");
 }
 
 #[derive(Debug, Default)]

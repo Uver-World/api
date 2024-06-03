@@ -51,3 +51,11 @@ impl LicenseManager {
         }
     }
 }
+
+impl Clone for LicenseManager {
+    fn clone(&self) -> Self {
+        Self {
+            licenses: self.licenses.clone(),
+        }
+    }
+}

@@ -11,7 +11,7 @@ use crate::{
 ///
 /// Requires 'Website' group
 #[openapi(tag = "Organizations")]
-#[post("/create", data = "<organization>", format = "application/json")] // <- route attribute
+#[post("/", data = "<organization>", format = "application/json")] // <- route attribute
 pub async fn create(
     user_data: UserData,
     database: &State<Database>,
@@ -38,13 +38,16 @@ pub async fn create(
         );
     }
 
+    // find all users with group server
+    let users = database.user_manager.get_users_by_group(Group::Server).await.unwrap();
+
     let organization = Organization {
         unique_id: Server::generate_unique_id().to_string(),
         creation_date: Server::current_time().to_string(),
         name: raw_organization.name,
         member_ids: Vec::new(),
         owner_id: raw_organization.owner_id,
-        server_ids: Vec::new(),
+        server_ids: users.iter().map(|user| user.unique_id.clone()).collect(),
         projects_ids: Vec::new(),
     };
 
@@ -85,7 +88,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/organization/create"),
+                format!("/organization"),
                 Some(serde_json::to_string(&body).unwrap()),
                 Some(request_token.to_string()),
             )
@@ -118,7 +121,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/organization/create"),
+                format!("/organization"),
                 Some(serde_json::to_string(&body).unwrap()),
                 Some(request_token.to_string()),
             )
@@ -159,7 +162,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/organization/create"),
+                format!("/organization"),
                 Some(serde_json::to_string(&body).unwrap()),
                 Some(request_token.to_string()),
             )
@@ -187,7 +190,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/organization/create"),
+                format!("/organization"),
                 Some(serde_json::to_string(&body).unwrap()),
                 None,
             )

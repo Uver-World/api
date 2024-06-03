@@ -16,7 +16,7 @@ use crate::{
 ///
 /// Requires 'Website' group
 #[openapi(tag = "Users")]
-#[post("/register", data = "<login>", format = "application/json")] // <- route attribute
+#[post("/", data = "<login>", format = "application/json")] // <- route attribute
 pub async fn register(
     user_data: UserData,
     database: &State<Database>,
@@ -128,7 +128,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/user/register"),
+                format!("/user"),
                 Some(serde_json::to_string(&Login::Credentials(credentials.clone())).unwrap()),
                 Some(request_token.to_string()),
             )
@@ -160,7 +160,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/user/register"),
+                format!("/user"),
                 None,
                 Some(request_token.to_string()),
             )
@@ -201,7 +201,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/user/register"),
+                format!("/user"),
                 Some(serde_json::to_string(&Login::Credentials(credentials.clone())).unwrap()),
                 Some(request_token.to_string()),
             )
@@ -233,7 +233,7 @@ mod tests {
             let response = dispatch_request(
                 &client,
                 Method::Post,
-                format!("/user/register"),
+                format!("/user"),
                 Some(serde_json::to_string(&Login::Credentials(credentials.clone())).unwrap()),
                 None,
             )

@@ -211,4 +211,24 @@ impl OrganizationManager {
             .update_one(filter, update, None)
             .await
     }
+
+    pub async fn get_servers_ids_from_organisation(
+        &self,
+        organization_id: &str,
+    ) -> Result<Vec<String>, Error> {
+        let filter = doc! { "unique_id": organization_id };
+        let organization = self.organizations.find_one(filter, None).await?;
+        match organization {
+            Some(organization) => Ok(organization.server_ids),
+            None => Ok(Vec::new()),
+        }
+    }
+}
+
+impl Clone for OrganizationManager {
+    fn clone(&self) -> Self {
+        Self {
+            organizations: self.organizations.clone(),
+        }
+    }
 }
