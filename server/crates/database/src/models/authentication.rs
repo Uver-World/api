@@ -67,6 +67,7 @@ impl Authentication {
             creation_date: timestamp.to_string(),
             logins: Vec::new(),
             group: Group::Guest,
+            permissions: Vec::new(),
         };
 
 

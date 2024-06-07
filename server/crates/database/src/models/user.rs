@@ -31,6 +31,7 @@ pub struct User {
     pub creation_date: String,
     pub logins: Vec<Login>,
     pub group: Group,
+    pub permissions: Vec<String>,
 }
 
 impl User {
@@ -55,7 +56,8 @@ impl User {
             unique_id,
             creation_date: timestamp.to_string(),
             logins: vec![Login::new("127.0.0.1".to_string(), timestamp, Authentication::None)],
-            group: Group::Website
+            group: Group::Website,
+            permissions: vec![],
         }
     }
 }

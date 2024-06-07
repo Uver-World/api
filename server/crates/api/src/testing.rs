@@ -35,6 +35,7 @@ pub async fn create_user(
             authentication,
         )],
         group,
+        permissions: Vec::new(),
     };
 
     let _ = database.user_manager.create_user(&user).await;
