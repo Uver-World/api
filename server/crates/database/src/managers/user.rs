@@ -115,6 +115,40 @@ impl UserManager {
         let update = doc! {"$set": to_bson(&fields).unwrap()};
         self.users.update_one(filter, update, None).await
     }
+
+    pub async fn add_permission(
+        &self,
+        uuid: String,
+        permission: String,
+    ) -> Result<UpdateResult, Error> {
+        let filter = doc! {"unique_id": uuid.to_string()};
+        let update = doc! {"$addToSet": {"permissions": permission}};
+        self.users.update_one(filter, update, None).await
+    }
+
+    pub async fn user_exists(&self, uuid: &str) -> bool {
+        let filter = doc! { "unique_id": uuid };
+        let result = self.users.find_one(filter, None).await;
+        match result {
+            Ok(user) => match user {
+                Some(_) => true,
+                None => false,
+            },
+            Err(_) => false,
+        }
+    }
+
+    pub async fn has_permission(&self, uuid: &str, permission: &str) -> bool {
+        let filter = doc! { "unique_id": uuid, "permissions": permission };
+        let result = self.users.find_one(filter, None).await;
+        match result {
+            Ok(user) => match user {
+                Some(_) => true,
+                None => false,
+            },
+            Err(_) => false,
+        }
+    }
 }
 
 impl Clone for UserManager {
