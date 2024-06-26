@@ -1,4 +1,4 @@
-use database::{group::Group, project::ProjectUpdateData, Database};
+use database::{project::ProjectUpdateData, Database};
 use rocket::{http::Status, patch, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -13,9 +13,7 @@ pub async fn update_project(
     id: String,
     project_update: Json<ProjectUpdateData>,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
 
     // If organization not found 
     match database
@@ -89,7 +87,6 @@ pub async fn update_project(
 mod tests {
 
     use database::{
-        group::Group,
         project::ProjectUpdateData,
         Database,
     };
@@ -101,8 +98,8 @@ mod tests {
     async fn test_unknow_organization() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let updates = ProjectUpdateData {
                 project_id: "cdcdgr".to_string(),
@@ -127,8 +124,8 @@ mod tests {
     async fn test_unknow_project() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let test_org = testing::get_org(database, &test_user).await;
             let updates = ProjectUpdateData {

@@ -1,4 +1,4 @@
-use database::{group::Group, Database, project::Project};
+use database::{Database, project::Project};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -19,9 +19,7 @@ pub async fn create_project(
     project: Json<ProjectInit>,
     id: String,
 ) -> Custom<Result<Json<String>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
 
     let organization = match database.organization_manager.from_id(&id).await {
         Ok(Some(organization)) => organization,
@@ -92,7 +90,7 @@ pub async fn create_project(
 #[cfg(test)]
 mod tests {
     
-    use database::{group::Group, Database};
+    use database::{Database};
     use rocket::http::{Method, Status};
     use crate::testing::{self, dispatch_request, run_test};
     use crate::model::project_init::ProjectInit;
@@ -102,7 +100,7 @@ mod tests {
     async fn test_create_project_non_existing_organization() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
 
             let project = ProjectInit {
                 name: "test_project".to_string(),

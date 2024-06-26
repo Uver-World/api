@@ -7,7 +7,7 @@ use rocket_okapi::okapi::schemars;
 use rocket_okapi::okapi::schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{group::Group, user::User};
+use crate::{user::User};
 
 #[derive(Serialize, Debug, Deserialize, Clone, JsonSchema, PartialEq)]
 pub enum Authentication {
@@ -66,7 +66,6 @@ impl Authentication {
             unique_id: unique_id.clone(),
             creation_date: timestamp.to_string(),
             logins: Vec::new(),
-            group: Group::Guest,
             permissions: Vec::new(),
         };
 

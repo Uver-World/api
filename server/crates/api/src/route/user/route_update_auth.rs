@@ -1,4 +1,4 @@
-use database::{authentication::Credentials, group::Group, managers::UserManager, Database};
+use database::{authentication::Credentials, managers::UserManager, Database};
 use rocket::{http::Status, patch, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -17,9 +17,7 @@ pub async fn update_auth(
     database: &State<Database>,
     login: Json<Login>,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::User]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
     _update_auth(user_data.id.unwrap(), login, &database.user_manager).await
 }
 
@@ -70,7 +68,6 @@ mod tests {
 
     use database::{
         authentication::{Authentication, Credentials},
-        group::Group,
         Database,
     };
     use rocket::http::{Method, Status};
@@ -85,7 +82,7 @@ mod tests {
     async fn test_update_auth() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
+            let test_user = testing::get_user(database).await;
             let user_token = test_user.get_token().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
@@ -122,14 +119,14 @@ mod tests {
 
     #[rocket::async_test]
     async fn unauthorized_test_update_auth() {
-        _unauthorized_test_update_auth(Group::Server).await;
-        _unauthorized_test_update_auth(Group::Website).await;
+        _unauthorized_test_update_auth().await;
+        _unauthorized_test_update_auth().await;
     }
 
-    async fn _unauthorized_test_update_auth(request_group: Group) {
+    async fn _unauthorized_test_update_auth() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, request_group).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
@@ -166,7 +163,7 @@ mod tests {
     async fn incorrect_test_update_auth() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, Group::User).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(

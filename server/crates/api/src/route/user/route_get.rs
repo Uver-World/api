@@ -1,4 +1,4 @@
-use database::{group::Group, user::User, Database};
+use database::{user::User, Database};
 use rocket::{get, http::Status, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -12,9 +12,7 @@ pub async fn get(
     database: &State<Database>,
     token_or_id: String,
 ) -> Custom<Result<Json<User>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
     if token_or_id.chars().all(|c| c.is_numeric()) {
         from_id(database, token_or_id).await
     } else {
@@ -59,7 +57,7 @@ async fn from_id(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, user::User, Database};
+    use database::{user::User, Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -71,8 +69,8 @@ mod tests {
     async fn test_from_id() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
@@ -95,7 +93,7 @@ mod tests {
     async fn test_from_unknown_id() {
         run_test(|client| async move {
             let request_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website)
+                testing::get_user(client.rocket().state::<Database>().unwrap())
                     .await;
             let request_token = request_user.get_token().unwrap();
             let id = "000000";
@@ -124,8 +122,8 @@ mod tests {
     async fn unauthorized_test_from_id() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::User).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
@@ -146,7 +144,7 @@ mod tests {
     async fn forbidden_test_from_id() {
         run_test(|client| async move {
             let test_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::User).await;
+                testing::get_user(client.rocket().state::<Database>().unwrap()).await;
 
             let response = dispatch_request(
                 &client,
@@ -166,8 +164,8 @@ mod tests {
     async fn test_from_token() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
@@ -190,7 +188,7 @@ mod tests {
     async fn test_from_unknown_token() {
         run_test(|client| async move {
             let request_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website)
+                testing::get_user(client.rocket().state::<Database>().unwrap())
                     .await;
             let request_token = request_user.get_token().unwrap();
             let token = "NO_TOKEN";
@@ -219,8 +217,8 @@ mod tests {
     async fn unauthorized_test_from_token() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::User).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
@@ -241,7 +239,7 @@ mod tests {
     async fn forbidden_test_from_token() {
         run_test(|client| async move {
             let test_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::User).await;
+                testing::get_user(client.rocket().state::<Database>().unwrap()).await;
 
             let response = dispatch_request(
                 &client,

@@ -1,4 +1,4 @@
-use database::{group::Group, Database, project::Project};
+use database::{Database, project::Project};
 use rocket::{http::Status, get, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 use crate::RequestError;
@@ -13,9 +13,7 @@ pub async fn project_from_id(
     project_id: String,
     id: String,
 ) -> Custom<Result<Json<Project>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
 
     // If organization not found
     let organization = match database.organization_manager.from_id(&id).await {
@@ -78,7 +76,7 @@ pub async fn project_from_id(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, Database};
+    use database::{Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -90,8 +88,8 @@ mod tests {
     async fn test_from_unknow_organization() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let test_org = testing::get_org(database, &test_user).await;
 
@@ -118,8 +116,8 @@ mod tests {
     async fn test_from_unknown_project() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let test_org = testing::get_org(database, &test_user).await;
 

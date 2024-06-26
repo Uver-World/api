@@ -8,7 +8,7 @@ use mongodb::{
     Collection,
 };
 
-use crate::{authentication::Authentication, models::user::User, user::UserUpdate, group::Group};
+use crate::{authentication::Authentication, models::user::User, user::UserUpdate};
 
 pub struct UserManager {
     pub users: Collection<User>,
@@ -114,28 +114,6 @@ impl UserManager {
             .collect();
         let update = doc! {"$set": to_bson(&fields).unwrap()};
         self.users.update_one(filter, update, None).await
-    }
-
-    pub async fn website_missing(&self) -> Result<bool, Error> {
-        let filter = doc! {"group": format!("{:?}", Group::Website)};
-        let documents = self.users.count_documents(filter, None).await?;
-        Ok(documents == 0)
-    }
-
-    pub async fn update_group(&self, uuid: String, group: Group) -> Result<UpdateResult, Error> {
-        let filter = doc! {"unique_id": uuid.to_string()};
-        let update = doc! {"$set": {"group": format!("{:?}", group)}};
-        self.users.update_one(filter, update, None).await
-    }
-
-    pub async fn get_users_by_group(&self, group: Group) -> Result<Vec<User>, Error> {
-        let filter = doc! {"group": format!("{:?}", group)};
-        let mut cursor = self.users.find(filter, None).await?;
-        let mut users = Vec::new();
-        while let Some(user) = cursor.next().await {
-            users.push(user?);
-        }
-        Ok(users)
     }
 }
 

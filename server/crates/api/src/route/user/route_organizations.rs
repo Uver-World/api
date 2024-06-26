@@ -1,4 +1,4 @@
-use database::{group::Group, Database, organization::Organization};
+use database::{Database, organization::Organization};
 use rocket::{http::Status, get, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -14,9 +14,7 @@ pub async fn get_organizations(
     database: &State<Database>,
     user_id: String,
 ) -> Custom<Result<Json<Vec<Organization>>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::User]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
     match database
         .organization_manager
         .get_organizations_from_user(&user_id)
@@ -37,7 +35,7 @@ pub async fn get_organizations(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, Database, organization::Organization};
+    use database::{Database, organization::Organization};
     use rocket::http::{Method, Status};
 
     use crate::testing::{self, dispatch_request, run_test};
@@ -46,8 +44,8 @@ mod tests {
     async fn test_get_organizations() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::User).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(

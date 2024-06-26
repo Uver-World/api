@@ -6,7 +6,7 @@ use rocket_okapi::okapi::schemars;
 use rocket_okapi::okapi::schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{authentication::Authentication, group::Group, login::Login};
+use crate::{authentication::Authentication, login::Login};
 
 #[derive(Deserialize, Serialize, Debug, JsonSchema)]
 pub enum UserUpdate {
@@ -30,7 +30,6 @@ pub struct User {
     pub unique_id: String,
     pub creation_date: String,
     pub logins: Vec<Login>,
-    pub group: Group,
     pub permissions: Vec<String>,
 }
 
@@ -56,7 +55,6 @@ impl User {
             unique_id,
             creation_date: timestamp.to_string(),
             logins: vec![Login::new("127.0.0.1".to_string(), timestamp, Authentication::None)],
-            group: Group::Website,
             permissions: vec![],
         }
     }

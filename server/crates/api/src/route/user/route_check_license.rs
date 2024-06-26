@@ -1,5 +1,5 @@
 use database::license::License;
-use database::{group::Group, Database};
+use database::{Database};
 use rocket::post;
 use rocket::{http::Status, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
@@ -17,9 +17,7 @@ pub async fn check_licenses(
     id: String,
     license_id: String,
 ) -> Custom<Result<Json<License>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server, Group::User]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
 
     let user = match database.user_manager.from_id(&id).await {
         Ok(user) => user,
@@ -73,7 +71,7 @@ pub async fn check_licenses(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, Database, license::License};
+    use database::{Database, license::License};
     use rocket::http::{Method, Status};
 
     use crate::testing::{self, dispatch_request, run_test};
@@ -82,8 +80,8 @@ mod tests {
     async fn test_check_licenses() {
         run_test(|client | async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let license = License {
                 unique_id: "test".to_string(),
@@ -112,8 +110,8 @@ mod tests {
     async fn test_check_licenses_invalid() {
         run_test(|client | async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let license = License {
                 unique_id: "test".to_string(),
@@ -139,7 +137,7 @@ mod tests {
     async fn test_check_licenses_unknown_user() {
         run_test(|client | async move {
             let request_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website)
+                testing::get_user(client.rocket().state::<Database>().unwrap())
                     .await;
             let request_token = request_user.get_token().unwrap();
 

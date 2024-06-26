@@ -1,4 +1,4 @@
-use database::{group::Group, Database};
+use database::{Database};
 use rocket::{delete, http::Status, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -12,9 +12,7 @@ pub async fn delete_from_token(
     database: &State<Database>,
     token: String,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
     match database.user_manager.delete_user(None, Some(&token)).await {
         Ok(Some(_)) => Custom(Status::Ok, Ok(Json(true))),
         Ok(_) => Custom(
@@ -35,7 +33,7 @@ pub async fn delete_from_token(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, Database};
+    use database::{Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -47,8 +45,8 @@ mod tests {
     async fn test_delete_from_token() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let user_token = test_user.get_token().unwrap();
 
@@ -79,7 +77,7 @@ mod tests {
     async fn test_unknown_delete_from_token() {
         run_test(|client| async move {
             let request_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website)
+                testing::get_user(client.rocket().state::<Database>().unwrap())
                     .await;
             let request_token = request_user.get_token().unwrap();
             let token = "NO_TOKEN";
@@ -106,15 +104,15 @@ mod tests {
 
     #[rocket::async_test]
     async fn unauthorized_test_delete_from_token() {
-        _unauthorized_test_delete_from_token(Group::User).await;
-        _unauthorized_test_delete_from_token(Group::Server).await;
+        _unauthorized_test_delete_from_token().await;
+        _unauthorized_test_delete_from_token().await;
     }
 
-    async fn _unauthorized_test_delete_from_token(request_group: Group) {
+    async fn _unauthorized_test_delete_from_token() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, request_group).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let user_token = test_user.get_token().unwrap();
 
@@ -144,7 +142,7 @@ mod tests {
     async fn forbidden_test_delete_from_token() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
+            let test_user = testing::get_user(database).await;
             let user_token = test_user.get_token().unwrap();
 
             let response = dispatch_request(

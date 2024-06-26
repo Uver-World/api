@@ -1,4 +1,4 @@
-use database::{group::Group, Database};
+use database::{Database};
 use database::license::License;
 use rocket::get;
 use rocket::{http::Status, response::status::Custom, serde::json::Json, State};
@@ -16,9 +16,7 @@ pub async fn get_licenses(
     database: &State<Database>,
     id: String,
 ) -> Custom<Result<Json<Vec<License>>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server, Group::User]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
 
     let user = match database.user_manager.from_id(&id).await {
         Ok(user) => user,
@@ -66,7 +64,7 @@ pub async fn get_licenses(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, Database, license::License};
+    use database::{Database, license::License};
     use rocket::http::{Method, Status};
 
     use crate::testing::{self, dispatch_request, run_test};
@@ -75,8 +73,8 @@ mod tests {
     async fn test_get_licenses() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
@@ -98,7 +96,7 @@ mod tests {
     #[rocket::async_test]
     async fn test_get_licenses_unknown_user() {
         run_test(|client| async move {
-            let request_user = testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website).await;
+            let request_user = testing::get_user(client.rocket().state::<Database>().unwrap()).await;
             let request_token = request_user.get_token().unwrap();
             let id = "NO_ID";
 

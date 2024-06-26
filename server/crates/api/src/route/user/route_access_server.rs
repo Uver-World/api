@@ -1,4 +1,4 @@
-use database::{group::Group, peer::Peer, Database};
+use database::{peer::Peer, Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -14,9 +14,7 @@ pub async fn access_server(
     database: &State<Database>,
     organisation_id: Json<OrganizationId>,
 ) -> Custom<Result<Json<Peer>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::User]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
 
     let organisation_id = organisation_id.0.0;
 
@@ -63,7 +61,7 @@ pub async fn access_server(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, peer::Peer, Database};
+    use database::{peer::Peer, Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -76,8 +74,8 @@ mod tests {
     async fn test_access_server() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_server = testing::get_user(database, Group::Server).await;
-            let test_user = testing::get_user(database, Group::User).await;
+            let test_server = testing::get_user(database).await;
+            let test_user = testing::get_user(database).await;
             let _test_org =
                 testing::create_org(database, &test_user, vec![test_server.unique_id.clone()])
                     .await;

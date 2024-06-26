@@ -1,4 +1,4 @@
-use database::{group::Group, organization::Organization, Database};
+use database::{organization::Organization, Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -17,10 +17,6 @@ pub async fn create(
     database: &State<Database>,
     organization: Json<OrganizationInit>,
 ) -> Custom<Result<Json<String>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
-
     let raw_organization = organization.0;
 
     let user = database
@@ -39,7 +35,7 @@ pub async fn create(
     }
 
     // find all users with group server
-    let users = database.user_manager.get_users_by_group(Group::Server).await.unwrap();
+    // let users = database.user_manager.get_users_by_group(Group::Server).await.unwrap();
 
     let organization = Organization {
         unique_id: Server::generate_unique_id().to_string(),
@@ -47,7 +43,8 @@ pub async fn create(
         name: raw_organization.name,
         member_ids: Vec::new(),
         owner_id: raw_organization.owner_id,
-        server_ids: users.iter().map(|user| user.unique_id.clone()).collect(),
+        // server_ids: users.iter().map(|user| user.unique_id.clone()).collect(),
+        server_ids: Vec::new(),
         projects_ids: Vec::new(),
     };
 
@@ -67,7 +64,7 @@ pub async fn create(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, Database};
+    use database::{Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -80,8 +77,8 @@ mod tests {
     async fn test_create() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let body = OrganizationInit::new("Test organization".to_string(), test_user.unique_id);
 
@@ -114,7 +111,7 @@ mod tests {
     async fn test_unknown_create() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, Group::Website).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let body = OrganizationInit::new("Test organization".to_string(), "NO_ID".to_string());
 
@@ -147,15 +144,15 @@ mod tests {
 
     #[rocket::async_test]
     async fn unauthorized_test_create() {
-        _unauthorized_test_create(Group::User).await;
-        _unauthorized_test_create(Group::Server).await;
+        _unauthorized_test_create().await;
+        _unauthorized_test_create().await;
     }
 
-    async fn _unauthorized_test_create(request_group: Group) {
+    async fn _unauthorized_test_create() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, request_group).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let body = OrganizationInit::new("Test organization".to_string(), test_user.unique_id);
 
@@ -184,7 +181,7 @@ mod tests {
     async fn forbidden_test_update() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
+            let test_user = testing::get_user(database).await;
             let body = OrganizationInit::new("Test organization".to_string(), test_user.unique_id);
 
             let response = dispatch_request(

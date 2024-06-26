@@ -3,7 +3,6 @@ use std::env;
 use std::future::Future;
 
 use database::authentication::Authentication;
-use database::group::Group;
 use database::login::Login;
 use database::organization::Organization;
 use database::user::User;
@@ -20,7 +19,6 @@ use crate::{get_rocket, Server};
 /// Returns it
 pub async fn create_user(
     database: &Database,
-    group: Group,
     authentication: Authentication,
 ) -> User {
     let timestamp = Server::current_time();
@@ -34,7 +32,6 @@ pub async fn create_user(
             timestamp,
             authentication,
         )],
-        group,
         permissions: Vec::new(),
     };
 
@@ -46,8 +43,8 @@ pub async fn create_user(
 /// Creates an user with the desired group
 /// Adds it to the database
 /// Returns it
-pub async fn get_user(database: &Database, group: Group) -> User {
-    create_user(database, group, Authentication::None).await
+pub async fn get_user(database: &Database) -> User {
+    create_user(database, Authentication::None).await
 }
 
 pub async fn create_org(database: &Database, user: &User, server_ids: Vec<String>) -> Organization {
