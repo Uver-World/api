@@ -1,4 +1,4 @@
-use database::{group::Group, organization::Organization, Database};
+use database::{organization::Organization, Database};
 use rocket::{get, http::Status, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -8,13 +8,11 @@ use crate::{model::user_token::UserData, RequestError};
 #[openapi(tag = "Organizations")]
 #[get("/<id>")] // <- route attribute
 pub async fn from_id(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     id: String,
 ) -> Custom<Result<Json<Organization>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website, Group::Server]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
     match database.organization_manager.from_id(&id).await {
         Ok(organization) if organization.is_some() => {
             Custom(Status::Ok, Ok(Json(organization.unwrap())))
@@ -33,7 +31,7 @@ pub async fn from_id(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, organization::Organization, Database};
+    use database::{organization::Organization, Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -45,8 +43,8 @@ mod tests {
     async fn test_from_id() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let test_org = testing::get_org(database, &test_user).await;
 
@@ -71,7 +69,7 @@ mod tests {
     async fn test_from_unknown_id() {
         run_test(|client| async move {
             let request_user =
-                testing::get_user(client.rocket().state::<Database>().unwrap(), Group::Website)
+                testing::get_user(client.rocket().state::<Database>().unwrap())
                     .await;
             let request_token = request_user.get_token().unwrap();
             let id = "NO_ID";
@@ -100,8 +98,8 @@ mod tests {
     async fn unauthorized_test_from_id() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::User).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let test_org = testing::get_org(database, &test_user).await;
 
@@ -123,7 +121,7 @@ mod tests {
     async fn forbidden_test_from_id() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
+            let test_user = testing::get_user(database).await;
             let test_org = testing::get_org(database, &test_user).await;
 
             let response = dispatch_request(

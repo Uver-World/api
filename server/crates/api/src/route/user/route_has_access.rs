@@ -1,4 +1,4 @@
-use database::{group::Group, Database};
+use database::{Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -14,9 +14,7 @@ pub async fn has_access(
     database: &State<Database>,
     user_id: Json<UserId>,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Server]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
     let server_id = user_data.id.unwrap();
     let user_id = user_id.0;
     match database.user_manager.from_id(&server_id).await {
@@ -51,7 +49,7 @@ pub async fn has_access(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, Database};
+    use database::{Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -63,8 +61,8 @@ mod tests {
     async fn test_has_access() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_server = testing::get_user(database, Group::Server).await;
-            let test_user = testing::get_user(database, Group::User).await;
+            let test_server = testing::get_user(database).await;
+            let test_user = testing::get_user(database).await;
             let _test_org =
                 testing::create_org(database, &test_user, vec![test_server.unique_id.clone()])
                     .await;

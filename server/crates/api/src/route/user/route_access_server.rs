@@ -1,82 +1,67 @@
-use database::{group::Group, peer::Peer, Database};
+use database::{peer::Peer, Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
 use crate::{
-    model::{server_id::ServerId, user_token::UserData},
+    model::{organisation_id::OrganizationId, user_token::UserData},
     RequestError,
 };
 
 #[openapi(tag = "Users")]
-#[post("/access_server", data = "<server_id>", format = "application/json")] // <- route attribute
+#[post("/access_server", data = "<organisation_id>", format = "application/json")] // <- route attribute
 pub async fn access_server(
     user_data: UserData,
     database: &State<Database>,
-    server_id: Json<ServerId>,
+    organisation_id: Json<OrganizationId>,
 ) -> Custom<Result<Json<Peer>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::User]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
-    let server_id = server_id.0;
-    match database.user_manager.from_id(&server_id.0).await {
-        Ok(user) if user.is_some() => {
-            match database
-                .organization_manager
-                .has_access_to_server(&server_id.0, &user_data.id.unwrap())
-                .await
-            {
-                Ok(true) => match database.peers_manager.from_server_id(&server_id.0).await {
-                    Ok(Some(peer)) => Custom(Status::Ok, Ok(Json(peer))),
-                    Ok(None) => Custom(
-                        Status::Ok,
-                        Err(RequestError::from(Custom(
-                            Status::NotFound,
-                            format!("The server is currently offline."),
-                        ))
-                        .into()),
-                    ),
-                    Err(_) => Custom(
-                        Status::Ok,
-                        Err(RequestError::from(Custom(
-                            Status::InternalServerError,
-                            format!("A database error occured."),
-                        ))
-                        .into()),
-                    ),
-                },
-                Ok(false) => Custom(
-                    Status::Ok,
-                    Err(RequestError::from(Custom(
-                        Status::Unauthorized,
-                        format!("You are not part of any organization of this server."),
-                    ))
-                    .into()),
-                ),
-                Err(_) => Custom(
-                    Status::Ok,
-                    Err(RequestError::from(Custom(
-                        Status::InternalServerError,
-                        format!("A database error occured."),
-                    ))
-                    .into()),
-                ),
-            }
-        }
-        _ => Custom(
-            Status::Ok,
+
+
+    let organisation_id = organisation_id.0.0;
+
+    let is_in_org = database
+        .organization_manager
+        .is_in_organization(&organisation_id, &user_data.id.unwrap())
+        .await
+        .unwrap();
+
+    if !is_in_org {
+        return Custom(
+            Status::Forbidden,
             Err(RequestError::from(Custom(
-                Status::NotFound,
-                format!("Server not found with id: {}", server_id.0),
+                Status::Forbidden,
+                format!("User is not in the organisation."),
             ))
             .into()),
-        ),
+        );
     }
+
+    let servers_ids = database
+        .organization_manager
+        .get_servers_ids_from_organisation(&organisation_id)
+        .await
+        .unwrap();
+    
+    for server_id in servers_ids {
+        match database.peers_manager.from_server_id(&server_id).await {
+            Ok(Some(peer)) => return Custom(Status::Ok, Ok(Json(peer))),
+            _ => continue,
+        }
+    }
+
+    Custom(
+        Status::Ok,
+        Err(RequestError::from(Custom(
+            Status::NotFound,
+            format!("No server is currently online."),
+        ))
+        .into()),
+    )
 }
 
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, peer::Peer, Database};
+    use database::{peer::Peer, Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -89,8 +74,8 @@ mod tests {
     async fn test_access_server() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_server = testing::get_user(database, Group::Server).await;
-            let test_user = testing::get_user(database, Group::User).await;
+            let test_server = testing::get_user(database).await;
+            let test_user = testing::get_user(database).await;
             let _test_org =
                 testing::create_org(database, &test_user, vec![test_server.unique_id.clone()])
                     .await;

@@ -1,4 +1,4 @@
-use database::{group::Group, organization::OrganizationUpdate, Database};
+use database::{organization::OrganizationUpdate, Database};
 use rocket::{http::Status, patch, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -8,14 +8,12 @@ use crate::{model::user_token::UserData, RequestError};
 #[openapi(tag = "Organizations")]
 #[patch("/<id>", data = "<organization_update>", format = "application/json")] // <- route attribute
 pub async fn update(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     id: String,
     organization_update: Json<Vec<OrganizationUpdate>>,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
 
     match database
         .organization_manager
@@ -42,7 +40,6 @@ pub async fn update(
 mod tests {
 
     use database::{
-        group::Group,
         organization::{Organization, OrganizationUpdate},
         Database,
     };
@@ -57,8 +54,8 @@ mod tests {
     async fn test_update() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let test_org = testing::get_org(database, &test_user).await;
             let updates = vec![
@@ -94,7 +91,7 @@ mod tests {
     async fn test_unknown_update() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, Group::Website).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let updates = vec![
                 OrganizationUpdate::Name("Another name".to_string()),
@@ -124,15 +121,15 @@ mod tests {
 
     #[rocket::async_test]
     async fn unauthorized_test_update() {
-        _unauthorized_test_update(Group::User).await;
-        _unauthorized_test_update(Group::Server).await;
+        _unauthorized_test_update().await;
+        _unauthorized_test_update().await;
     }
 
-    async fn _unauthorized_test_update(request_group: Group) {
+    async fn _unauthorized_test_update() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
-            let request_user = testing::get_user(database, request_group).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let test_org = testing::get_org(database, &test_user).await;
             let updates = vec![
@@ -166,7 +163,7 @@ mod tests {
     async fn forbidden_test_update() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::User).await;
+            let test_user = testing::get_user(database).await;
             let test_org = testing::get_org(database, &test_user).await;
             let updates = vec![
                 OrganizationUpdate::Name("Another name".to_string()),

@@ -24,8 +24,7 @@ impl ApiRoute {
                 user::renew,
                 user::register,
                 user::email_exists,
-                user::from_id,
-                user::from_token,
+                user::get,
                 user::update_auth,
                 user::update,
                 user::delete_from_id,
@@ -36,6 +35,7 @@ impl ApiRoute {
                 user::server_disconnect,
                 user::from_email,
                 user::check_licenses,
+                user::add_perm,
             ],
             Self::Organization => openapi_get_routes_spec![
                 organization::add_member,

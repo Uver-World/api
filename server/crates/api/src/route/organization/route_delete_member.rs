@@ -1,4 +1,4 @@
-use database::{group::Group, Database, organization::Organization};
+use database::{Database, organization::Organization};
 use rocket::{http::Status, delete, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -17,14 +17,12 @@ use crate::{
     format = "application/json"
 )]
 pub async fn remove_member(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     id: String,
     body: Json<OrganizationMember>,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
 
     // Check if the organization exists
     match database.organization_manager.from_id(&id).await {
@@ -87,7 +85,7 @@ fn error_response(status: Status, message: &str) -> Custom<Result<Json<bool>, Js
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, Database};
+    use database::{Database};
     use rocket::http::{Method, Status};
     use serde_json::json;
 
@@ -97,8 +95,8 @@ mod tests {
     async fn test_unknow_organization() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::Website).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
@@ -121,9 +119,9 @@ mod tests {
     async fn test_unknow_member() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_user = testing::get_user(database, Group::Website).await;
+            let test_user = testing::get_user(database).await;
             let organization = testing::get_org(database, &test_user).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use futures::StreamExt;
 use mongodb::{
     bson::{doc, to_bson, Bson},
     error::Error,
@@ -7,7 +8,7 @@ use mongodb::{
     Collection,
 };
 
-use crate::{authentication::Authentication, models::user::User, user::UserUpdate, group::Group};
+use crate::{authentication::Authentication, models::user::User, user::UserUpdate};
 
 pub struct UserManager {
     pub users: Collection<User>,
@@ -115,9 +116,45 @@ impl UserManager {
         self.users.update_one(filter, update, None).await
     }
 
-    pub async fn website_missing(&self) -> Result<bool, Error> {
-        let filter = doc! {"group": format!("{:?}", Group::Website)};
-        let documents = self.users.count_documents(filter, None).await?;
-        Ok(documents == 0)
+    pub async fn add_permission(
+        &self,
+        uuid: String,
+        permission: String,
+    ) -> Result<UpdateResult, Error> {
+        let filter = doc! {"unique_id": uuid.to_string()};
+        let update = doc! {"$addToSet": {"permissions": permission}};
+        self.users.update_one(filter, update, None).await
+    }
+
+    pub async fn user_exists(&self, uuid: &str) -> bool {
+        let filter = doc! { "unique_id": uuid };
+        let result = self.users.find_one(filter, None).await;
+        match result {
+            Ok(user) => match user {
+                Some(_) => true,
+                None => false,
+            },
+            Err(_) => false,
+        }
+    }
+
+    pub async fn has_permission(&self, uuid: &str, permission: &str) -> bool {
+        let filter = doc! { "unique_id": uuid, "permissions": permission };
+        let result = self.users.find_one(filter, None).await;
+        match result {
+            Ok(user) => match user {
+                Some(_) => true,
+                None => false,
+            },
+            Err(_) => false,
+        }
+    }
+}
+
+impl Clone for UserManager {
+    fn clone(&self) -> Self {
+        Self {
+            users: self.users.clone(),
+        }
     }
 }

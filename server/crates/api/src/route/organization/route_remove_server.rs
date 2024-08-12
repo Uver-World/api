@@ -1,4 +1,4 @@
-use database::{group::Group, Database};
+use database::{Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -17,13 +17,11 @@ use crate::{
     format = "application/json"
 )]
 pub async fn remove_server(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     organization_server: Json<OrganizationServer>,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
 
     check_organization(database, organization_server).await
 }
@@ -66,7 +64,7 @@ async fn check_server(
         .from_id(&organization_server.server_id)
         .await
     {
-        Ok(Some(server)) if matches!(server.group, Group::Server) => {
+        Ok(Some(_server)) => {
             match database
                 .organization_manager
                 .remove_from_server_ids(
@@ -95,7 +93,7 @@ fn error_response(status: Status, message: &str) -> Custom<Result<Json<bool>, Js
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, Database};
+    use database::{Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -107,12 +105,12 @@ mod tests {
     async fn test_remove_server() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let test_server = testing::get_user(database, Group::Server).await;
-            let test_user = testing::get_user(database, Group::User).await;
+            let test_server = testing::get_user(database).await;
+            let test_user = testing::get_user(database).await;
             let test_org =
                 testing::create_org(database, &test_user, vec![test_server.unique_id.clone()])
                     .await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let body = OrganizationServer {
                 organization_id: test_org.unique_id.clone(),
