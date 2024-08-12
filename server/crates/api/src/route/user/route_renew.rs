@@ -15,7 +15,7 @@ use crate::{
 #[openapi(tag = "Users")]
 #[post("/renew", data = "<login>", format = "application/json")] // <- route attribute
 pub async fn renew(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     login: Option<Json<Login>>,
     remot_addr: ApiSocketAddr,
@@ -153,6 +153,7 @@ mod tests {
             let test_user = testing::create_user(
                 database,
                 Authentication::Credentials(credentials.clone()),
+                Vec::new()
             )
             .await;
             let response = dispatch_request(

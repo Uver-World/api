@@ -13,7 +13,7 @@ use crate::{
 #[openapi(tag = "Organizations")]
 #[post("/", data = "<organization>", format = "application/json")] // <- route attribute
 pub async fn create(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     organization: Json<OrganizationInit>,
 ) -> Custom<Result<Json<String>, Json<RequestError>>> {

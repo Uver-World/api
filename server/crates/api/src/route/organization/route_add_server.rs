@@ -17,7 +17,7 @@ use crate::{
     format = "application/json"
 )]
 pub async fn add_server(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     organization_server: Json<OrganizationServer>,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
@@ -62,7 +62,7 @@ async fn check_server(
         .from_id(&organization_server.server_id)
         .await
     {
-        Ok(Some(server)) => {
+        Ok(Some(_server)) => {
             match database
                 .organization_manager
                 .add_to_server_ids(

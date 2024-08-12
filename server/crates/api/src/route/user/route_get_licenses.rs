@@ -12,7 +12,7 @@ use crate::{model::user_token::UserData, RequestError};
 #[openapi(tag = "Users")]
 #[get("/id/<id>/license")]
 pub async fn get_licenses(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     id: String,
 ) -> Custom<Result<Json<Vec<License>>, Json<RequestError>>> {

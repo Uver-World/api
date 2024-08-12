@@ -12,7 +12,7 @@ use crate::{model::user_token::UserData, RequestError};
 #[openapi(tag = "Users")]
 #[post("/<id>/license/<license_id>")]
 pub async fn check_licenses(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     id: String,
     license_id: String,

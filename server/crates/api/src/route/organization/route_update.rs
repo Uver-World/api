@@ -8,7 +8,7 @@ use crate::{model::user_token::UserData, RequestError};
 #[openapi(tag = "Organizations")]
 #[patch("/<id>", data = "<organization_update>", format = "application/json")] // <- route attribute
 pub async fn update(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     id: String,
     organization_update: Json<Vec<OrganizationUpdate>>,

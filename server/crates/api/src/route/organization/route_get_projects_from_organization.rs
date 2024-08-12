@@ -10,7 +10,7 @@ use crate::model::user_token::UserData;
 #[openapi(tag = "Organizations")]
 #[get("/<id>/projects", format = "application/json")]
 pub async fn get_projects_from_organization(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     id: String,
 ) -> Custom<Result<Json<Vec<Project>>, Json<RequestError>>> {

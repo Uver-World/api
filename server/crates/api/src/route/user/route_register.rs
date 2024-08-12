@@ -18,7 +18,7 @@ use crate::{
 #[openapi(tag = "Users")]
 #[post("/", data = "<login>", format = "application/json")] // <- route attribute
 pub async fn register(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     login: Option<Json<Login>>,
     remot_addr: ApiSocketAddr,

@@ -5,6 +5,7 @@ use std::future::Future;
 use database::authentication::Authentication;
 use database::login::Login;
 use database::organization::Organization;
+use database::permission::{Permission};
 use database::user::User;
 use database::Database;
 use rocket::http::{Header, Method};
@@ -20,6 +21,7 @@ use crate::{get_rocket, Server};
 pub async fn create_user(
     database: &Database,
     authentication: Authentication,
+    permissions: Vec<String>,
 ) -> User {
     let timestamp = Server::current_time();
 
@@ -32,7 +34,7 @@ pub async fn create_user(
             timestamp,
             authentication,
         )],
-        permissions: Vec::new(),
+        permissions: permissions.clone(),
     };
 
     let _ = database.user_manager.create_user(&user).await;
@@ -44,7 +46,7 @@ pub async fn create_user(
 /// Adds it to the database
 /// Returns it
 pub async fn get_user(database: &Database) -> User {
-    create_user(database, Authentication::None).await
+    create_user(database, Authentication::None, Vec::new()).await
 }
 
 pub async fn create_org(database: &Database, user: &User, server_ids: Vec<String>) -> Organization {
@@ -161,4 +163,31 @@ impl Image for MongoContainer {
     fn env_vars(&self) -> Box<dyn Iterator<Item = (&String, &String)> + '_> {
         Box::new(self.env_vars.iter())
     }
+}
+
+
+/// Creates a permission with the desired name
+/// Adds it to the database
+/// Returns it
+pub async fn create_permission(
+    database: &Database,
+    name: &str,
+) -> Permission {
+
+    let perm = Permission {
+        unique_id: Server::generate_unique_id().to_string(),
+        name: name.to_string(),
+    };
+
+    let _ = database.permission_manager.create(&perm).await;
+
+    perm
+}
+
+pub async fn get_permission_id(
+    database: &Database,
+    name: &str,
+) -> String {
+    let perm = create_permission(database, name).await;
+    perm.unique_id
 }

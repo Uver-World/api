@@ -8,7 +8,7 @@ use crate::model::user_token::UserData;
 #[openapi(tag = "Organizations")]
 #[get("/<id>/projects/<project_id>", format = "application/json")]
 pub async fn project_from_id(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     project_id: String,
     id: String,

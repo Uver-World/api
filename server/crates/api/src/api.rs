@@ -1,4 +1,4 @@
-use database::user::User;
+
 use rocket::{fairing::AdHoc, *};
 
 use database::*;

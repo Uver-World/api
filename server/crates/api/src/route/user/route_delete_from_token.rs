@@ -8,7 +8,7 @@ use crate::{model::user_token::UserData, RequestError};
 #[openapi(tag = "Users")]
 #[delete("/token/<token>")] // <- route attribute
 pub async fn delete_from_token(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     token: String,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {

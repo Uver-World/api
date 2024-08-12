@@ -13,7 +13,7 @@ use rand::distributions::Alphanumeric;
 #[openapi(tag = "Users")]
 #[post("/<id>/license")]
 pub async fn create_license(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     id: String,
 ) -> Custom<Result<Json<License>, Json<RequestError>>> {

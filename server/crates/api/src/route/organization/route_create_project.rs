@@ -14,7 +14,7 @@ use crate::{
 #[post("/<id>/projects", data = "<project>", format = "application/json")] // <- route attribute
 // Add new project to organization
 pub async fn create_project(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     project: Json<ProjectInit>,
     id: String,

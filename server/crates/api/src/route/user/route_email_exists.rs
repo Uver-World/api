@@ -8,7 +8,7 @@ use crate::{model::user_token::UserData, RequestError};
 #[openapi(tag = "Users")]
 #[get("/email_exists/<email>")] // <- route attribute
 pub async fn email_exists(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     email: String,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
@@ -50,6 +50,7 @@ mod tests {
             let _ = testing::create_user(
                 database,
                 Authentication::Credentials(credentials.clone()),
+                Vec::new()
             )
             .await;
             let request_user = testing::get_user(database).await;
@@ -115,6 +116,7 @@ mod tests {
             let _ = testing::create_user(
                 database,
                 Authentication::Credentials(credentials.clone()),
+                Vec::new()
             )
             .await;
 
@@ -145,6 +147,7 @@ mod tests {
             let _ = testing::create_user(
                 database,
                 Authentication::Credentials(credentials.clone()),
+                Vec::new()
             )
             .await;
 

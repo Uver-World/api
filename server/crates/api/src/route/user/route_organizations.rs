@@ -10,7 +10,7 @@ use crate::{
 #[openapi(tag = "Users")]
 #[get("/id/<user_id>/organizations")]
 pub async fn get_organizations(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     user_id: String,
 ) -> Custom<Result<Json<Vec<Organization>>, Json<RequestError>>> {

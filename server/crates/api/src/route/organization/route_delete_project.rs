@@ -18,7 +18,7 @@ pub struct DeleteProject {
 #[openapi(tag = "Organizations")]
 #[delete("/<id>/projects", data = "<project_data>", format = "application/json")]
 pub async fn delete_project(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     project_data: Json<DeleteProject>,
     id: String,

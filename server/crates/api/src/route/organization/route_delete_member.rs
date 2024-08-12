@@ -17,7 +17,7 @@ use crate::{
     format = "application/json"
 )]
 pub async fn remove_member(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     id: String,
     body: Json<OrganizationMember>,

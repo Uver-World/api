@@ -8,7 +8,7 @@ use crate::{model::user_token::UserData, RequestError};
 #[openapi(tag = "Users")]
 #[get("/<token_or_id>")] // <- route attribute
 pub async fn get(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     token_or_id: String,
 ) -> Custom<Result<Json<User>, Json<RequestError>>> {
