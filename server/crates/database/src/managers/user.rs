@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use futures::StreamExt;
 use mongodb::{
     bson::{doc, to_bson, Bson},
     error::Error,
