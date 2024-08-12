@@ -131,6 +131,10 @@ impl Database {
                 unique_id: Server::generate_unique_id().to_string(),
                 name: "permission.add".to_string(),
             },
+            Permission {
+                unique_id: Server::generate_unique_id().to_string(),
+                name: "permission.remove".to_string(),
+            },
         ];
         db.collection::<Permission>("permissions").delete_many(doc! {}, None).await?;
         db.collection::<Permission>("permissions").insert_many(permissions, None).await?;

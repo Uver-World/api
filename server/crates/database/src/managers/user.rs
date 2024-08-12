@@ -126,6 +126,16 @@ impl UserManager {
         self.users.update_one(filter, update, None).await
     }
 
+    pub async fn remove_permission(
+        &self,
+        uuid: String,
+        permission: String,
+    ) -> Result<UpdateResult, Error> {
+        let filter = doc! {"unique_id": uuid.to_string()};
+        let update = doc! {"$pull": {"permissions": permission}};
+        self.users.update_one(filter, update, None).await
+    }
+
     pub async fn user_exists(&self, uuid: &str) -> bool {
         let filter = doc! { "unique_id": uuid };
         let result = self.users.find_one(filter, None).await;

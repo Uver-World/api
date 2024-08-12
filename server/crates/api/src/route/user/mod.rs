@@ -16,6 +16,7 @@ mod route_update_auth;
 mod route_from_email;
 mod route_check_license;
 mod route_add_perm;
+mod route_remove_perm;
 
 pub use route_get_licenses::*;
 pub use route_create_license::*;
@@ -35,3 +36,4 @@ pub use route_update_auth::*;
 pub use route_from_email::*;
 pub use route_check_license::*;
 pub use route_add_perm::*;
+pub use route_remove_perm::*;

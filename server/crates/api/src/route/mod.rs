@@ -36,6 +36,7 @@ impl ApiRoute {
                 user::from_email,
                 user::check_licenses,
                 user::add_perm,
+                user::remove_perm,
             ],
             Self::Organization => openapi_get_routes_spec![
                 organization::add_member,
