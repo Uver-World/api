@@ -6,12 +6,12 @@ use crate::{model::user_token::UserData, RequestError};
 
 // A route to verify if a user has a specific permission.
 #[openapi(tag = "Users")]
-#[get("/check-permission/<user_id>/permissions/<permission_id>")]
+#[get("/check-permission/<user_id>/permissions/<permission_name>")]
 pub async fn check_perm(
     user_data: UserData,
     database: &State<Database>,
     user_id: String,
-    permission_id: String,
+    permission_name: String,
 ) -> Custom<Result<Json<bool>, Json<RequestError>>> {
     if user_data.id.is_none() {
         return Custom(
@@ -39,20 +39,23 @@ pub async fn check_perm(
         );
     }
 
-    if !database
+    let permission_id = match database
         .permission_manager
-        .permission_exists(&permission_id)
+        .get_permission_id(&permission_name)
         .await
     {
-        return Custom(
-            Status::NotFound,
-            Err(RequestError::from(Custom(
+        Ok(id) => id,
+        Err(_) => {
+            return Custom(
                 Status::NotFound,
-                format!("Permission not found"),
-            ))
-            .into()),
-        );
-    }
+                Err(RequestError::from(Custom(
+                    Status::NotFound,
+                    format!("Unknown permission"),
+                ))
+                .into()),
+            )
+        }
+    };
 
     let permission_check = match database
         .permission_manager
