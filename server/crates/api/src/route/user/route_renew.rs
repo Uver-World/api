@@ -1,5 +1,5 @@
 use database::{
-    authentication::Authentication, group::Group, managers::UserManager, user::User, Database,
+    authentication::Authentication, managers::UserManager, user::User, Database,
 };
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
@@ -15,7 +15,7 @@ use crate::{
 #[openapi(tag = "Users")]
 #[post("/renew", data = "<login>", format = "application/json")] // <- route attribute
 pub async fn renew(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     login: Option<Json<Login>>,
     remot_addr: ApiSocketAddr,
@@ -41,9 +41,6 @@ pub async fn renew(
             renew_token(user, ip, auth, &database.user_manager).await
         }
         Login::UserId(user_id) => {
-            if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-                return Custom(response.0, Err(RequestError::from(response).into()));
-            }
             let user = database.user_manager.from_id(&user_id).await;
             renew_token(
                 user.map_err(|err| err.to_string()),
@@ -94,7 +91,6 @@ mod tests {
 
     use database::{
         authentication::{Authentication, Credentials},
-        group::Group,
         Database,
     };
     use rocket::http::{Method, Status};
@@ -109,8 +105,8 @@ mod tests {
     async fn test_renew_admin() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let server_user = testing::get_user(database, Group::Server).await;
-            let request_user = testing::get_user(database, Group::Website).await;
+            let server_user = testing::get_user(database).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             println!(
@@ -156,8 +152,8 @@ mod tests {
             };
             let test_user = testing::create_user(
                 database,
-                Group::User,
                 Authentication::Credentials(credentials.clone()),
+                Vec::new()
             )
             .await;
             let response = dispatch_request(
@@ -190,7 +186,7 @@ mod tests {
     async fn test_unknown_admin_renew() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, Group::Website).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let id = "NO_ID".to_string();
 
@@ -239,15 +235,15 @@ mod tests {
 
     #[rocket::async_test]
     async fn unauthorized_test_renew() {
-        _unauthorized_test_renew(Group::User).await;
-        _unauthorized_test_renew(Group::Server).await;
+        _unauthorized_test_renew().await;
+        _unauthorized_test_renew().await;
     }
 
-    async fn _unauthorized_test_renew(request_group: Group) {
+    async fn _unauthorized_test_renew() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, request_group).await;
-            let server_user = testing::get_user(database, Group::Server).await;
+            let request_user = testing::get_user(database).await;
+            let server_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
@@ -281,7 +277,7 @@ mod tests {
     async fn forbidden_test_renew_admin() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let server_user = testing::get_user(database, Group::Server).await;
+            let server_user = testing::get_user(database).await;
 
             let response = dispatch_request(
                 &client,

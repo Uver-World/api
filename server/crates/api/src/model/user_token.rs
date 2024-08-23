@@ -1,9 +1,6 @@
-use database::group::Group;
 use database::Database;
 
-use rocket::http::Status;
 use rocket::request::{self, FromRequest, Outcome, Request};
-use rocket::response::status::Custom;
 use rocket_okapi::okapi::openapi3::{
     Object, SecurityRequirement, SecurityScheme, SecuritySchemeData,
 };
@@ -16,27 +13,11 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct UserData {
     pub id: Option<String>,
-    pub group: Group,
 }
 
 impl UserData {
-    pub fn matches_group(&self, groups: Vec<Group>) -> Result<(), Custom<String>> {
-        if matches!(self.group, Group::Guest) {
-            return Err(Custom(Status::Forbidden, "Authentication required.".into()));
-        }
-        if !groups.contains(&self.group) {
-            return Err(Custom(
-                Status::Unauthorized,
-                format!("You need to be part of one of the following groups: [{groups:?}]."),
-            ));
-        }
-        Ok(())
-    }
-}
-
-impl UserData {
-    fn new(id: Option<String>, group: Group) -> Self {
-        Self { id, group }
+    fn new(id: Option<String>) -> Self {
+        Self { id }
     }
 }
 
@@ -54,7 +35,7 @@ impl<'r> FromRequest<'r> for UserData {
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<UserData, Self::Error> {
         let keys: Vec<_> = request.headers().get("X-User-Token").collect();
         match keys.len() {
-            0 => return Outcome::Success(UserData::new(None, Group::Guest)),
+            0 => return Outcome::Success(UserData::new(None)),
             1 => {
                 let token = keys.first().unwrap();
 
@@ -64,12 +45,12 @@ impl<'r> FromRequest<'r> for UserData {
 
                 if user.is_ok() && let Some(user) = user.as_ref().unwrap() {
                     let user = user.clone();
-                    return Outcome::Success(UserData::new(Some(user.unique_id), user.group));
+                    return Outcome::Success(UserData::new(Some(user.unique_id)));
                 }
-                return Outcome::Success(UserData::new(None, Group::Guest));
+                return Outcome::Success(UserData::new(None));
             }
             _ => {
-                return Outcome::Success(UserData::new(None, Group::Guest));
+                return Outcome::Success(UserData::new(None));
             }
         }
     }

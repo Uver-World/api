@@ -1,4 +1,4 @@
-use database::{group::Group, peer::Peer, Database};
+use database::{peer::Peer, Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 
@@ -11,9 +11,7 @@ pub async fn server_authenticate(
     user_data: UserData,
     database: &State<Database>,
 ) -> Custom<Result<Json<Peer>, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Server]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
     let server_unique_id = user_data.id.unwrap();
 
     match database.peers_manager.peers_exist(&server_unique_id).await {
@@ -52,7 +50,7 @@ pub async fn server_authenticate(
 #[cfg(test)]
 mod tests {
 
-    use database::{group::Group, peer::Peer, Database};
+    use database::{peer::Peer, Database};
     use rocket::http::{Method, Status};
 
     use crate::{
@@ -64,7 +62,7 @@ mod tests {
     async fn test_server_authenticate() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, Group::Server).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
@@ -87,7 +85,7 @@ mod tests {
     async fn test_server_authenticate_conflict() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, Group::Server).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
@@ -122,14 +120,14 @@ mod tests {
 
     #[rocket::async_test]
     async fn unauthorized_test_server_authenticate() {
-        _unauthorized_test_server_authenticate(Group::User).await;
-        _unauthorized_test_server_authenticate(Group::Website).await;
+        _unauthorized_test_server_authenticate().await;
+        _unauthorized_test_server_authenticate().await;
     }
 
-    async fn _unauthorized_test_server_authenticate(request_group: Group) {
+    async fn _unauthorized_test_server_authenticate() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, request_group).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(

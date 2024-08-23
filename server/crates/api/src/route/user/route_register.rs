@@ -1,4 +1,4 @@
-use database::{authentication::Authentication, authentication::Credentials, group::Group, managers::UserManager, Database};
+use database::{authentication::Authentication, authentication::Credentials, managers::UserManager, Database};
 use rocket::{http::Status, post, response::status::Custom, serde::json::Json, State};
 use rocket_okapi::openapi;
 use gravatar::{Gravatar, Rating};
@@ -18,14 +18,12 @@ use crate::{
 #[openapi(tag = "Users")]
 #[post("/", data = "<login>", format = "application/json")] // <- route attribute
 pub async fn register(
-    user_data: UserData,
+    _user_data: UserData,
     database: &State<Database>,
     login: Option<Json<Login>>,
     remot_addr: ApiSocketAddr,
 ) -> Custom<Result<String, Json<RequestError>>> {
-    if let Err(response) = user_data.matches_group(vec![Group::Website]) {
-        return Custom(response.0, Err(RequestError::from(response).into()));
-    }
+
     let ip = remot_addr.0.ip().to_string();
     if login.is_none() {
         return _register(Authentication::None, ip, &database.user_manager).await;
@@ -102,7 +100,6 @@ mod tests {
 
     use database::{
         authentication::{Authentication, Credentials},
-        group::Group,
         Database,
     };
     use rocket::http::{Method, Status};
@@ -116,7 +113,7 @@ mod tests {
     async fn test_register() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, Group::Website).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
             let credentials = Credentials {
                 email: "test@test.fr".to_string(),
@@ -154,7 +151,7 @@ mod tests {
     async fn test_no_auth_register() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, Group::Website).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let response = dispatch_request(
@@ -181,14 +178,14 @@ mod tests {
 
     #[rocket::async_test]
     async fn unauthorized_test_register() {
-        _unauthorized_test_register(Group::User).await;
-        _unauthorized_test_register(Group::Server).await;
+        _unauthorized_test_register().await;
+        _unauthorized_test_register().await;
     }
 
-    async fn _unauthorized_test_register(request_group: Group) {
+    async fn _unauthorized_test_register() {
         run_test(|client| async move {
             let database = client.rocket().state::<Database>().unwrap();
-            let request_user = testing::get_user(database, request_group).await;
+            let request_user = testing::get_user(database).await;
             let request_token = request_user.get_token().unwrap();
 
             let credentials = Credentials {
