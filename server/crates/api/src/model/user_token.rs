@@ -43,8 +43,8 @@ impl<'r> FromRequest<'r> for UserData {
 
                 let user = db.user_manager.from_token(token).await;
 
-                if user.is_ok() && let Some(user) = user.as_ref().unwrap() {
-                    let user = user.clone();
+                if let Some(user) = user.as_ref().unwrap() {
+                    let user = user.clone();  // No need for explicit type here, `user` should be `User`
                     return Outcome::Success(UserData::new(Some(user.unique_id)));
                 }
                 return Outcome::Success(UserData::new(None));

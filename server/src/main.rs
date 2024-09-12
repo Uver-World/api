@@ -1,9 +1,9 @@
-#![feature(coverage_attribute)]
+//#![feature(coverage_attribute)]
 
 use clap::{Arg, Command};
 use rocket::*;
 
-#[coverage(off)]
+//#[coverage(off)]
 fn export_env() -> Result<(), String> {
     let app = Command::new("").subcommand_negates_reqs(true).arg(
         Arg::new("envfile")
@@ -20,7 +20,7 @@ fn export_env() -> Result<(), String> {
     Ok(())
 }
 
-#[coverage(off)]
+//#[coverage(off)]
 #[launch]
 async fn rocket() -> _ {
     let env = export_env();

@@ -1,5 +1,7 @@
 mod organization;
 mod user;
+mod asset;
+mod comment;
 
 use rocket::Route;
 use rocket_okapi::okapi::openapi3::OpenApi;
@@ -11,6 +13,8 @@ pub enum ApiRoute {
     Root,
     User,
     Organization,
+    Asset,
+    Comment,
 }
 
 impl ApiRoute {
@@ -53,6 +57,10 @@ impl ApiRoute {
                 organization::delete_project,
                 organization::project_from_id,
                 organization::update_project,
+            ],
+            Self::Asset => openapi_get_routes_spec![
+            ],
+            Self::Comment => openapi_get_routes_spec![
             ],
         }
     }

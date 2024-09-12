@@ -8,3 +8,5 @@ pub mod project;
 pub mod license;
 pub mod permission;
 pub mod server;
+pub mod asset;
+pub mod comment;
