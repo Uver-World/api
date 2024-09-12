@@ -1,7 +1,7 @@
 use bson::doc;
 use mongodb::{error::Error, *};
 
-use crate::{managers::{LicenseManager, OrganizationManager, PeersManager, PermissionManager, ProjectManager, UserManager}, permission::Permission};
+use crate::{managers::{LicenseManager, OrganizationManager, PeersManager, PermissionManager, ProjectManager, UserManager, AssetManager}, permission::Permission};
 
 use crate::server::Server;
 
@@ -27,6 +27,7 @@ pub struct Database {
     pub project_manager: ProjectManager,
     pub license_manager: LicenseManager,
     pub permission_manager: PermissionManager,
+    pub asset_manager: AssetManager,
 }
 
 impl Database {
@@ -55,6 +56,12 @@ impl Database {
         }
         if !names.contains(&"permissions".to_string()) {
             db.create_collection("permissions", None).await?;
+        }
+        if !names.contains(&"assets".to_string()) {
+            db.create_collection("assets", None).await?;
+        }
+        if !names.contains(&"comments".to_string()) {
+            db.create_collection("comments", None).await?;
         }
 
         // clear permissions collection
@@ -150,6 +157,7 @@ impl Database {
             project_manager: ProjectManager::init(db.collection("projects")),
             license_manager: LicenseManager::init(db.collection("licenses")),
             permission_manager: PermissionManager::init(db.collection("permissions")),
+            asset_manager: AssetManager::init(db.collection("assets")),
         })
     }
 }
