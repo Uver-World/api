@@ -62,6 +62,7 @@ pub fn get_rocket() -> Rocket<Build> {
         "/" => ApiRoute::Root.retrieve_routes(),
         "/user" => ApiRoute::User.retrieve_routes(),
         "/organization" => ApiRoute::Organization.retrieve_routes(),
+        "/asset" => ApiRoute::Asset.retrieve_routes(),
     };
     rocket_builder.manage(Server::default())
 }

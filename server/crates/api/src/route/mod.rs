@@ -14,7 +14,6 @@ pub enum ApiRoute {
     User,
     Organization,
     Asset,
-    Comment,
 }
 
 impl ApiRoute {
@@ -59,8 +58,8 @@ impl ApiRoute {
                 organization::update_project,
             ],
             Self::Asset => openapi_get_routes_spec![
-            ],
-            Self::Comment => openapi_get_routes_spec![
+                asset::create_asset,
+                // asset::delete_asset,
             ],
         }
     }
