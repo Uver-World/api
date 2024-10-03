@@ -64,7 +64,6 @@ impl Database {
             db.create_collection("comments", None).await?;
         }
 
-        // clear permissions collection
         let permissions = vec![
             Permission {
                 unique_id: Server::generate_unique_id().to_string(),
@@ -147,8 +146,17 @@ impl Database {
                 name: "permission.see".to_string(),
             },
         ];
-        db.collection::<Permission>("permissions").delete_many(doc! {}, None).await?;
-        db.collection::<Permission>("permissions").insert_many(permissions, None).await?;
+        // db.collection::<Permission>("permissions").insert_many(permissions, None).await?;
+        // check if each permission exists, if not, insert it
+        for permission in permissions {
+            let filter = doc! {
+                "name": &permission.name
+            };
+            let result = db.collection::<Permission>("permissions").find_one(filter, None).await?;
+            if result.is_none() {
+                db.collection::<Permission>("permissions").insert_one(permission, None).await?;
+            }
+        }
 
         Ok(Database {
             user_manager: UserManager::init(db.collection("users")),
